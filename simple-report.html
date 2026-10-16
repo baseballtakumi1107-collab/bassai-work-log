@@ -461,6 +461,62 @@ renderAll=function(){oldRenderAll();drawMulti('vehicle');drawMulti('crew')};
 $('import').addEventListener('change',()=>{setTimeout(()=>{initMulti()},150)},false);
 
 // iPhoneホーム画面用：印刷APIに依存しないオフラインPDF出力
+
+// SafariのSVG画像化が失敗する場合は、表示中の日報のDOMを直接描画する。
+async function createReportPDFFallback(){
+ const root=$('report'), width=1122, height=794;
+ const canvas=document.createElement('canvas');canvas.width=2244;canvas.height=1588;
+ const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
+ const oldStyle=root.getAttribute('style');
+ root.style.setProperty('width',width+'px','important');
+ root.style.setProperty('min-height','0','important');
+ root.style.setProperty('height','auto','important');
+ root.style.setProperty('padding','18px','important');
+ root.style.setProperty('box-sizing','border-box','important');
+ const base=root.getBoundingClientRect();
+ const offsetX=18,offsetY=18;
+ const pos=r=>({x:r.left-base.left+offsetX,y:r.top-base.top+offsetY,w:r.width,h:r.height});
+ try{
+  const walk=el=>{
+   if(el.nodeType===3){
+    const value=el.textContent;
+    if(!value.trim())return;
+    const parent=el.parentElement,st=getComputedStyle(parent);
+    if(st.display==='none'||st.visibility==='hidden')return;
+    const range=document.createRange();range.selectNodeContents(el);
+    const rects=[...range.getClientRects()];
+    ctx.fillStyle=st.color||'#111';
+    ctx.font=st.font||'10px serif';
+    ctx.textBaseline='top';
+    rects.forEach((r,i)=>{
+      const v=rects.length===1?value.trim():value.trim().split(/\s+/)[i]||value.trim();
+      const q=pos(r);ctx.fillText(v,q.x,q.y,Math.max(q.w+3,5));
+    });
+    return;
+   }
+   if(el.nodeType!==1)return;
+   const st=getComputedStyle(el);
+   if(st.display==='none'||st.visibility==='hidden')return;
+   const r=pos(el.getBoundingClientRect());
+   if(['TD','TH'].includes(el.tagName)){
+    ctx.strokeStyle='#222';ctx.lineWidth=.65;ctx.strokeRect(r.x,r.y,r.w,r.h);
+   }
+   if(el.classList.contains('reportmeta')){
+    ctx.strokeStyle='#222';ctx.beginPath();ctx.moveTo(r.x,r.y+r.h);ctx.lineTo(r.x+r.w,r.y+r.h);ctx.stroke();
+   }
+   if(el.classList.contains('circled')||el.classList.contains('circled-work')){
+    ctx.strokeStyle='#111';ctx.lineWidth=1.5;ctx.beginPath();ctx.ellipse(r.x+r.w/2,r.y+r.h/2,r.w/2+3,r.h/2+2,0,0,Math.PI*2);ctx.stroke();
+   }
+   [...el.childNodes].forEach(walk);
+  };
+  walk(root);
+  const jpg=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('画像を保存できません')),'image/jpeg',.95));
+  return buildPDFWithJPEG(new Uint8Array(await jpg.arrayBuffer()),canvas.width,canvas.height);
+ }finally{
+  if(oldStyle===null)root.removeAttribute('style');else root.setAttribute('style',oldStyle);
+ }
+}
+
 async function createReportPDF(){
   // 日報確認画面と同じ幅・高さ・文字サイズで画像化する。
   const width=1122,height=794;
@@ -514,7 +570,7 @@ $('previewPrint').textContent='PDFを作成・共有／印刷';
 $('previewPrint').onclick=async()=>{
  const button=$('previewPrint');button.disabled=true;button.textContent='PDFを作成中…';
  try{
-  const blob=await createReportPDF(),filename='作業日報_'+(state.date||'').replace(/[^0-9-]/g,'')+'.pdf';
+  let blob;try{blob=await createReportPDF()}catch(originalError){console.warn('Safari画像化失敗、代替方式で作成',originalError);blob=await createReportPDFFallback()}const filename='作業日報_'+(state.date||'').replace(/[^0-9-]/g,'')+'.pdf';
   const file=new File([blob],filename,{type:'application/pdf'});
   if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
    try{await navigator.share({files:[file],title:'作業日報'});return}catch(e){if(e.name==='AbortError')return}
