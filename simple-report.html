@@ -285,7 +285,7 @@
  html,body{margin:0!important;padding:0!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
  body>#reportPreview{position:static!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
  #reportPreview>.preview-scroll{position:static!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
- #reportPreview #report{position:relative!important;top:0!important;left:0!important;display:block!important;width:297mm!important;height:210mm!important;min-height:210mm!important;max-height:210mm!important;box-sizing:border-box!important;padding:3mm 3mm 2mm 14mm!important;margin:0!important;overflow:hidden!important}
+ #reportPreview #report{position:relative!important;top:0!important;left:0!important;display:block!important;width:297mm!important;height:210mm!important;min-height:210mm!important;max-height:210mm!important;box-sizing:border-box!important;padding:3mm 3mm 2mm 15mm!important;margin:0!important;overflow:hidden!important}
  #report .report-main .data-row,#report .report-main .blank-row{height:39px!important}
  #report .report-main thead tr{height:33px!important}
  #report .report-footer th,#report .report-footer td{height:29px!important}
@@ -296,7 +296,7 @@
 }
 
 /* v16: プレビューとPDFのレイアウトを共通化 */
-.report-preview.show #report{width:1122px!important;height:794px!important;min-height:794px!important;padding:8px 12px!important;overflow:hidden!important}
+.report-preview.show #report{width:1122px!important;height:794px!important;min-height:794px!important;padding:8px 12px 8px 57px!important;overflow:hidden!important}
 #report .report-main .data-row,#report .report-main .blank-row{height:35px!important}
 #report .report-main thead tr{height:30px!important}
 #report .report-main td.reportnote{padding:1px 4px!important;vertical-align:middle!important}
@@ -599,7 +599,7 @@ async function createReportPDFFallback(){
  root.style.setProperty('width',width+'px','important');
  root.style.setProperty('min-height','0','important');
  root.style.setProperty('height','auto','important');
- root.style.setProperty('padding','8px 12px','important');
+ root.style.setProperty('padding','8px 12px 8px 57px','important');
  root.style.setProperty('box-sizing','border-box','important');
  const base=root.getBoundingClientRect();
  const offsetX=0,offsetY=0;
@@ -657,9 +657,9 @@ async function createReportPDF(){
   const report=$('report');
   const clone=report.cloneNode(true);
   // IDを残さないと #report に対する表のスタイルがPDFから消えてしまう。
-  clone.setAttribute('style','display:block!important;position:static!important;width:1122px!important;height:794px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:8px 12px!important;background:#fff!important;color:#111!important;box-shadow:none!important;overflow:hidden!important;box-sizing:border-box!important');
+  clone.setAttribute('style','display:block!important;position:static!important;width:1122px!important;height:794px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:8px 12px 8px 57px!important;background:#fff!important;color:#111!important;box-shadow:none!important;overflow:hidden!important;box-sizing:border-box!important');
   const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
-  const override=`#report{display:block!important;width:1122px!important;height:794px!important;min-height:794px!important;padding:8px 12px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
+  const override=`#report{display:block!important;width:1122px!important;height:794px!important;min-height:794px!important;padding:8px 12px 8px 57px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
   #report .report-main .data-row,#report .report-main .blank-row{height:35px!important}
   #report .report-main thead tr{height:30px!important}
   #report .reporttable{font-size:12px!important;line-height:1.2!important}
