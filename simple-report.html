@@ -346,17 +346,38 @@ function openModal(k){if(!allowed(...k.split('|')))return;active=k;$('selected')
 $('save').onclick=()=>{if(saveOwner(true)){$('save').textContent='次の地権者分を追加';}};
 $('another').onclick=()=>saveOwner(true);$('finishSpan').onclick=()=>{if(Object.values(state.cells).some(v=>Number(v)>0)){alert('まだ保存していない本数があります。「この地権者分を追加」を押してから確定してください。');return;}if(!state.pole.trim()&&!state.futaku.trim()){alert('入力する電柱間がありません');return;}state.pole='';state.futaku='';state.branch='1';state.heavy='no';state.cells={};editIndex=null;saveState();sync();renderAll();$('save').textContent='この地権者分を追加';alert('電柱間の入力を確定しました。次の電柱間を入力できます。');};
 $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){state.cells={};saveState();renderMatrix()}};function renderSaved(){
- let html='';
+ const groups=new Map();
  state.spans.forEach((s,i)=>{
-  html+='<div style="padding:9px;border-bottom:1px solid #ddd;display:flex;align-items:center;gap:9px;flex-wrap:wrap">'+
-   '<label style="display:flex;align-items:center;gap:7px;flex:1 1 190px;margin:0;font-size:15px">'+
-   '<input type="checkbox" data-select="'+i+'" '+(selectedWorks.has(i)?'checked':'')+' style="width:22px;height:22px;flex-shrink:0">'+
-   '<b>'+esc(s.futaku)+'　'+esc(s.pole||'')+'</b></label>'+
-   '<button data-edit="'+i+'">編集</button><button data-del="'+i+'">削除</button></div>';
+  const key=(s.futaku||'')+'|'+(s.pole||'');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(i);
  });
+ let html='';
+ for(const [key,indices] of groups){
+  const first=state.spans[indices[0]];
+  const checked=indices.every(i=>selectedWorks.has(i));
+  const count=indices.length;
+  html+='<div style="padding:10px 2px;border-bottom:1px solid #ddd">'+
+   '<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap">'+
+   '<label style="display:flex;align-items:center;gap:8px;flex:1 1 190px;margin:0;font-size:15px">'+
+   '<input type="checkbox" data-group-select="'+esc(key)+'" '+(checked?'checked':'')+' style="width:22px;height:22px;flex-shrink:0">'+
+   '<b>'+esc(first.futaku)+'　'+esc(first.pole||'')+
+   ' <span style="font-size:12px;font-weight:normal;color:#50665f">（'+count+'地権者分）</span></b></label>'+
+   '<button data-group-toggle="'+esc(key)+'" type="button">内訳</button></div>'+
+   '<div data-group-details="'+esc(key)+'" style="display:none;padding:8px 0 2px 30px">'+
+   indices.map((i,j)=>'<div style="display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap">'+
+    '<span style="flex:1">地権者'+(j+1)+'（'+calc(state.spans[i].cells).qty+'本）</span>'+
+    '<button data-edit="'+i+'">編集</button><button data-del="'+i+'">削除</button></div>').join('')+
+   '</div></div>';
+ }
  $('saved').innerHTML=html||'<p class="muted">まだ保存されていません</p>';
- document.querySelectorAll('[data-select]').forEach(b=>b.onchange=()=>{
-  let i=Number(b.dataset.select);if(b.checked)selectedWorks.add(i);else selectedWorks.delete(i);
+ document.querySelectorAll('[data-group-select]').forEach(b=>b.onchange=()=>{
+  const indices=groups.get(b.dataset.groupSelect)||[];
+  indices.forEach(i=>b.checked?selectedWorks.add(i):selectedWorks.delete(i));
+ });
+ document.querySelectorAll('[data-group-toggle]').forEach(b=>b.onclick=()=>{
+  const detail=[...document.querySelectorAll('[data-group-details]')].find(e=>e.dataset.groupDetails===b.dataset.groupToggle);
+  if(detail){const show=detail.style.display==='none';detail.style.display=show?'block':'none';b.textContent=show?'閉じる':'内訳';}
  });
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
   editIndex=Number(b.dataset.edit);let s=state.spans[editIndex];
@@ -364,7 +385,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
   sync();renderMatrix();window.scrollTo(0,0)
  });
  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
-  if(confirm('この保存作業を削除しますか？')){
+  if(confirm('この地権者分の保存作業を削除しますか？')){
    let i=Number(b.dataset.del);state.spans.splice(i,1);
    const old=[...selectedWorks];selectedWorks.clear();old.forEach(n=>{if(n!==i)selectedWorks.add(n>i?n-1:n)});
    lastReportedIds=[];$('deleteReported').disabled=true;
