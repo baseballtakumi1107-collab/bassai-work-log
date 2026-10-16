@@ -235,7 +235,7 @@
  #report .report-main .data-row,#report .report-main .blank-row {height:19px!important}
 }
 #report .nowrap-head{white-space:nowrap;display:inline-block;font-size:8px;letter-spacing:-.35px} @media print{#report .nowrap-head{font-size:8px!important}}
-</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">修正版 10/16</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
+</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">PDF対応版 10/16</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
 <div class="multi-block"><label>班長名<input id="leader" placeholder="班長名を入力" autocomplete="off"></label><h4>班員 <span class="muted">（6人以上も登録可能）</span></h4><div id="crewRows"></div><button type="button" id="addCrew">＋ 班員を追加</button></div>
@@ -444,4 +444,90 @@ sync=function(){oldSync();drawMulti('vehicle');drawMulti('crew')};
 const oldRenderAll=renderAll;
 renderAll=function(){oldRenderAll();drawMulti('vehicle');drawMulti('crew')};
 $('import').addEventListener('change',()=>{setTimeout(()=>{initMulti()},150)},false);
+
+// iPhoneホーム画面用：印刷APIに依存しないオフラインPDF出力
+async function createReportPDF(){
+ const W=2100,H=1485,cv=document.createElement('canvas');cv.width=W;cv.height=H;
+ const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
+ ctx.fillStyle='#111';ctx.strokeStyle='#111';ctx.lineWidth=1.7;
+ const font=(size,bold=false)=>{ctx.font=(bold?'bold ':'')+size+'px "Hiragino Kaku Gothic ProN","Hiragino Mincho ProN",sans-serif';};
+ function write(t,x,y,w,h,size=19,bold=false){
+  t=String(t||'').replace(/\s+/g,' ').trim();if(!t)return;
+  font(size,bold);while(ctx.measureText(t).width>w-10&&size>10){size--;font(size,bold)}
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+w/2,y+h/2,Math.max(10,w-8));
+ }
+ function grid(table,x,y,width,rowHeight,headerHeight){
+  const rows=[...table.rows],colN=Math.max(...rows.map(r=>[...r.cells].reduce((a,c)=>a+c.colSpan,0)));
+  let widths;
+  if(table.classList.contains('report-main'))widths=[.09,.20,.044,.044,.044,.07,.044,.044,.044,.07,.044,.09,.17];
+  else if(table.classList.contains('report-footer'))widths=[.09,.37,.09,.15,.07,.23];
+  else widths=Array(colN).fill(1/colN);
+  let total=widths.reduce((a,b)=>a+b,0);widths=widths.map(v=>v/total*width);
+  const xs=[x];widths.forEach(v=>xs.push(xs[xs.length-1]+v));
+  const heights=rows.map((_,i)=>i<(table.tHead?.rows.length||0)?headerHeight:rowHeight);
+  const ys=[y];heights.forEach(v=>ys.push(ys[ys.length-1]+v));
+  let occupied=new Set();
+  rows.forEach((r,ri)=>{let ci=0;[...r.cells].forEach(cell=>{
+   while(occupied.has(ri+':'+ci))ci++;
+   const cs=cell.colSpan||1,rs=cell.rowSpan||1;
+   let cw=xs[Math.min(ci+cs,colN)]-xs[ci],ch=ys[Math.min(ri+rs,rows.length)]-ys[ri];
+   ctx.strokeRect(xs[ci],ys[ri],cw,ch);
+   let value=cell.innerText||cell.textContent||'';
+   if(cell.classList.contains('reportnote'))value=value.replace(/\s+/g,' ');
+   write(value,xs[ci],ys[ri],cw,ch,ri<2?16:18,cell.tagName==='TH');
+   for(let rr=ri;rr<ri+rs;rr++)for(let cc=ci;cc<ci+cs;cc++)occupied.add(rr+':'+cc);
+   ci+=cs;
+  })});return ys[ys.length-1];
+ }
+ const margin=40,usable=W-2*margin;
+ const meta=$('report').querySelector('.reportmeta');
+ font(34,true);ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('作 業 日 報（伐採交渉・工事）',margin,65);
+ font(22);ctx.textAlign='right';ctx.fillText((state.date||'')+'　鹿屋 営業所',W-margin,65);
+ let y=92;
+ const main=$('report').querySelector('.report-main');
+ y=grid(main,margin,y,usable,46,51);
+ y+=8;
+ const footer=$('report').querySelector('.report-footer');
+ y=grid(footer,margin,y,usable,60,60);
+ y+=12;
+ const bottom=$('report').querySelector('.report-bottom');
+ const work=bottom.querySelector('.report-work'),crew=bottom.querySelector('.report-crew');
+ grid(work,margin,y,usable*.21,68,48);
+ grid(crew,margin+usable*.22,y,usable*.78,50,48);
+ // JPEGを単一ページのA4横PDFに埋め込む（外部ライブラリ・通信不要）
+ const data=cv.toDataURL('image/jpeg',.91).split(',')[1];
+ const binary=atob(data),jpg=new Uint8Array(binary.length);
+ for(let i=0;i<binary.length;i++)jpg[i]=binary.charCodeAt(i);
+ const encoder=new TextEncoder(),chunks=[],offsets=[0];let length=0;
+ const add=b=>{chunks.push(b);length+=b.length};const str=t=>add(encoder.encode(t));
+ str('%PDF-1.4\n');
+ function obj(n,body){offsets[n]=length;str(n+' 0 obj\n'+body+'\nendobj\n')}
+ obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+ obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
+ obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
+ offsets[4]=length;str('4 0 obj\n<< /Type /XObject /Subtype /Image /Width '+W+' /Height '+H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n');add(jpg);str('\nendstream\nendobj\n');
+ const cmd='q 841.89 0 0 595.28 0 0 cm /Im0 Do Q\n';
+ obj(5,'<< /Length '+encoder.encode(cmd).length+' >>\nstream\n'+cmd+'endstream');
+ const xref=length;str('xref\n0 6\n0000000000 65535 f \n');
+ for(let i=1;i<=5;i++)str(String(offsets[i]).padStart(10,'0')+' 00000 n \n');
+ str('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
+ const bytes=new Uint8Array(length);let at=0;for(const part of chunks){bytes.set(part,at);at+=part.length}
+ return new Blob([bytes],{type:'application/pdf'});
+}
+$('previewPrint').textContent='PDFを作成・共有／印刷';
+$('previewPrint').onclick=async()=>{
+ const button=$('previewPrint');button.disabled=true;button.textContent='PDFを作成中…';
+ try{
+  const blob=await createReportPDF(),filename='作業日報_'+(state.date||'').replace(/[^0-9-]/g,'')+'.pdf';
+  const file=new File([blob],filename,{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+   try{await navigator.share({files:[file],title:'作業日報'});return}catch(e){if(e.name==='AbortError')return}
+  }
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  alert('PDFを保存しました。ファイルアプリで開き、共有から「プリント」を選んでください。');
+  setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }catch(e){alert('PDFの作成に失敗しました：'+e.message)}
+ finally{button.disabled=false;button.textContent='PDFを作成・共有／印刷'}
+};
 </script></body></html>
