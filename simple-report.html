@@ -320,11 +320,11 @@
 /* 左側の穴あけ余白：用紙の高さ中央に短い位置合わせ線 */
 .report-preview.show #report::after{content:"";position:absolute!important;left:2px;top:50%;width:36px;height:0;border-top:1px solid #555;pointer-events:none;z-index:3}
 .report-preview.show #report{position:relative!important}
-</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
+</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報15行ごと自動改ページ版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー</h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
 <div class="multi-block"><label>班長名<input id="leader" placeholder="班長名を入力" autocomplete="off"></label><h4>班員</h4><div id="crewRows"></div><button type="button" id="addCrew">＋ 班員を追加</button></div>
-<div style="display:none"><input id="vehicle"><select id="vehicleHistory"></select><input id="crew"><select id="crewHistory"></select></div></section><section class="card"><h3>② 電柱間の入力</h3><div class="futaku-line"><div class="futaku-base"><label>付託番号（5桁）<input id="futaku" list="futakuSuggestions" inputmode="numeric" maxlength="5" placeholder="12345" autocomplete="off"><div id="futakuDropdown" class="futaku-dropdown"></div></label></div><span class="futaku-dash">−</span><div class="futaku-branch"><label>枝番<input id="branch" inputmode="numeric" maxlength="1" placeholder="1" autocomplete="off"><div id="branchDropdown" class="futaku-dropdown"></div></label></div></div><div class="row"><label>電柱番号<input id="pole" list="poleSuggestions" placeholder="例：123ハ123〜124"><select id="poleHistory"><option value="">電柱番号の履歴から選ぶ</option></select></label></div><div class="row"><label>重機使用<select id="heavy"><option value="no">なし</option><option value="yes">あり</option></select></label></div><datalist id="futakuSuggestions"></datalist><datalist id="poleSuggestions"></datalist><div style="display:none"><select id="futakuHistory"></select></div><p class="muted">表の＋を押すと数字入力画面が開きます。数字をもう一度押せば修正できます。</p><div class="scroll"><table id="matrix"></table></div><div class="stat" id="sum"></div><div class="row" style="margin-top:12px"><button class="primary" id="save">この地権者分を追加</button><button class="primary" id="finishSpan" type="button">この電柱間の入力を確定</button><button id="another" style="display:none">同じ付託・電柱間で地権者を追加</button><button id="clear">表をクリア</button></div></section><section class="card"><h3>③ 保存した作業</h3><p class="muted">日報に載せる作業にチェックを入れてください。未選択の作業は残ります。</p><div id="saved"></div><div class="row"><button id="deleteReported" type="button" disabled>日報に使用した作業を削除</button><button class="primary" id="print">日報を確認・印刷（A4横）</button><button id="export">バックアップ保存</button><label style="flex:0 0 auto">バックアップ読込<input type="file" id="import" accept="application/json"></label></div></section><section class="card"><details id="rateSettings"><summary style="cursor:pointer;font-size:18px;font-weight:bold;color:#176b52;padding:8px 2px;list-style:revert">工量設定を開く・変更する</summary><div style="padding-top:12px"><p class="muted">必要なときだけ工量を変更できます。変更した数字は自動保存されます。</p><div id="rates"></div></div></details></section></main><div class="modal" id="modal"><div class="dialog"><b id="selected"></b><input id="number" type="text" inputmode="none" placeholder="本数"><div class="pad" id="pad"></div><div class="modal-actions"><button class="primary" id="confirm">本数を確定</button><div class="row"><button id="cancel">⌫ 1文字消す</button><button id="erase">削除</button></div></div></div></div><div id="reportPreview" class="report-preview" aria-hidden="true"><div class="preview-tools"><button id="previewClose">入力画面に戻る</button><button class="primary" id="previewPrint">印刷する</button></div><div class="preview-scroll"><section id="report"></section></div></div><script>
+<div style="display:none"><input id="vehicle"><select id="vehicleHistory"></select><input id="crew"><select id="crewHistory"></select></div></section><section class="card"><h3>② 電柱間の入力</h3><div class="futaku-line"><div class="futaku-base"><label>付託番号（5桁）<input id="futaku" list="futakuSuggestions" inputmode="numeric" maxlength="5" placeholder="12345" autocomplete="off"><div id="futakuDropdown" class="futaku-dropdown"></div></label></div><span class="futaku-dash">−</span><div class="futaku-branch"><label>枝番<input id="branch" inputmode="numeric" maxlength="1" placeholder="1" autocomplete="off"><div id="branchDropdown" class="futaku-dropdown"></div></label></div></div><div class="row"><label>電柱番号<input id="pole" list="poleSuggestions" placeholder="例：123ハ123〜124"><select id="poleHistory"><option value="">電柱番号の履歴から選ぶ</option></select></label></div><div class="row"><label>重機使用<select id="heavy"><option value="no">なし</option><option value="yes">あり</option></select></label></div><datalist id="futakuSuggestions"></datalist><datalist id="poleSuggestions"></datalist><div style="display:none"><select id="futakuHistory"></select></div><p class="muted">表の＋を押すと数字入力画面が開きます。数字をもう一度押せば修正できます。</p><div class="scroll"><table id="matrix"></table></div><div class="stat" id="sum"></div><div class="row" style="margin-top:12px"><button class="primary" id="save">この地権者分を追加</button><button class="primary" id="finishSpan" type="button">この電柱間の入力を確定</button><button id="another" style="display:none">同じ付託・電柱間で地権者を追加</button><button id="clear">表をクリア</button></div></section><section class="card"><h3>③ 保存した作業</h3><p class="muted">日報に載せる作業にチェックを入れてください。未選択の作業は残ります。</p><div id="saved"></div><div class="row"><button id="deleteReported" type="button" disabled>日報に使用した作業を削除</button><button class="primary" id="print">日報を確認・印刷（A4横）</button><button id="export">バックアップ保存</button><label style="flex:0 0 auto">バックアップ読込<input type="file" id="import" accept="application/json"></label></div></section><section class="card"><details id="rateSettings"><summary style="cursor:pointer;font-size:18px;font-weight:bold;color:#176b52;padding:8px 2px;list-style:revert">工量設定を開く・変更する</summary><div style="padding-top:12px"><p class="muted">必要なときだけ工量を変更できます。変更した数字は自動保存されます。</p><div id="rates"></div></div></details></section></main><div class="modal" id="modal"><div class="dialog"><b id="selected"></b><input id="number" type="text" inputmode="none" placeholder="本数"><div class="pad" id="pad"></div><div class="modal-actions"><button class="primary" id="confirm">本数を確定</button><div class="row"><button id="cancel">⌫ 1文字消す</button><button id="erase">削除</button></div></div></div></div><div id="reportPreview" class="report-preview" aria-hidden="true"><div class="preview-tools"><button id="previewClose">入力画面に戻る</button><button class="primary" id="previewPrint">印刷する</button></div><div class="preview-pager" id="reportPager" style="display:none;align-items:center;justify-content:center;gap:12px;padding:6px;background:white"><button type="button" id="pagePrev">前のページ</button><b id="pageIndicator"></b><button type="button" id="pageNext">次のページ</button></div><div class="preview-scroll"><section id="report"></section></div></div><script>
 const trees=['杉','桧','雑','孟宗','カラ','小雑','女竹','かずら'],cuts=['根切り','芯止め','大枝幹元','大枝幹元以外','小枝幹元','小枝幹元以外'];const KEY='bassai_simple_grid_v2';const initial={'杉|根切り':105,'杉|芯止め':68,'桧|根切り':105,'桧|芯止め':68,'雑|根切り':40,'雑|芯止め':40,'孟宗|根切り':7,'孟宗|芯止め':7,'女竹|根切り':77,'女竹|芯止め':77,'かずら|根切り':61};let state={branch:"1",prefix:"",histories:{futaku:[],poles:[],vehicles:[],crews:[]},vehicle:'',crew:'',futaku:'',start:'',end:'',date:new Date().toLocaleDateString('en-CA'),workStart:'08:00',workEnd:'17:00',heavy:'no',leader:'',cells:{},spans:[],rates:initial};try{let saved=JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('bassai_simple_grid_v1')||'{}');state={...state,...saved};state.histories=state.histories||{futaku:[],poles:[],vehicles:[],crews:[]};if(state.futaku.includes('-')){let a=state.futaku.split('-');state.futaku=a[0];state.branch=a[1]||'1'}}catch{}if(!state.pole)state.pole=(state.prefix||'')+(state.start||'')+(state.end?'〜'+state.end:'');Object.assign(state.rates,{"杉|小枝幹元":43,"杉|小枝幹元以外":43,"桧|小枝幹元":43,"桧|小枝幹元以外":43,"雑|大枝幹元":78,"雑|大枝幹元以外":78,"雑|小枝幹元":34,"雑|小枝幹元以外":34,"孟宗|小枝幹元":7,"孟宗|小枝幹元以外":7,"カラ|小枝幹元":7,"カラ|小枝幹元以外":7,"カラ|根切り":7,"小雑|根切り":77,"カラ|芯止め":7,"小雑|芯止め":77});state.spans=(Array.isArray(state.spans)?state.spans:[]).map(s=>({...s,pole:s.pole||((s.prefix||'')+(s.start||'')+(s.end?'〜'+s.end:''))}));let editIndex=null,active=null;const selectedWorks=new Set();let lastReportedIds=[];const $=id=>document.getElementById(id),saveState=()=>localStorage.setItem(KEY,JSON.stringify(state));function sync(){['vehicle','crew','futaku','branch','pole','date','heavy','leader'].forEach(k=>$(k).value=state[k]||'');}sync();
 const halfHours=Array.from({length:48},(_,i)=>String(Math.floor(i/2)).padStart(2,'0')+':'+(i%2?'30':'00'));
 for(const [id,key,fallback] of [['workStart','workStart','08:00'],['workEnd','workEnd','17:00']]){
@@ -487,7 +487,10 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
  const distinct=new Set(items.map(s=>s.group||s.futaku+'|'+s.pole)).size;
  let prev='',total=items.reduce((n,s)=>n+calc(s.cells).work,0);
  // 15行の表の右端、最後の2行に集計を埋め込む。余分な行を増やさない。
- const allRows=Array.from({length:Math.max(15,items.length)},(_,i)=>items[i]||null);
+ const pages=Array.from({length:Math.ceil(items.length/15)},(_,p)=>Array.from({length:15},(_,i)=>items[p*15+i]||null));
+ const pageHtml=[];
+ for(let pageIndex=0;pageIndex<pages.length;pageIndex++){
+ const allRows=pages[pageIndex];
  let rows=allRows.map((s,i)=>{
    let cells,heavy='';
    if(s){
@@ -498,8 +501,8 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
      heavy='<span class="heavy-label'+(s.heavy==='yes'?' circled':'')+'">重機</span>';
    }else{cells=Array(12).fill('<td>&nbsp;</td>').join('');heavy='<span class="heavy-label">重機</span>'}
    let note=heavy;
-   if(i===allRows.length-2)note='<div class="note-split"><div class="heavy-slot">'+heavy+'</div><div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div></div>';
-   if(i===allRows.length-1)note='<div class="note-split"><div class="heavy-slot">'+heavy+'</div><div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div></div>';
+   if(pageIndex===0 && i===13)note='<div class="note-split"><div class="heavy-slot">'+heavy+'</div><div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div></div>';
+   if(pageIndex===0 && i===14)note='<div class="note-split"><div class="heavy-slot">'+heavy+'</div><div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div></div>';
    return '<tr class="'+(s?'data-row':'blank-row')+'">'+cells+'<td class="reportnote">'+note+'</td></tr>';
  }).join('');
  const cars=(state.vehicleList||[]).filter(Boolean),names=(state.crewList||[]).filter(Boolean);
@@ -508,7 +511,7 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
   const person=Array.from({length:3},(_,j)=>'<td>'+escVal(names[i*3+j])+'</td><td></td>').join('');
   return '<tr><td>'+(i===0?'伐採工事':'')+'</td><td>'+(i===0?escVal(state.leader):'')+'</td><td></td>'+person+Array.from({length:3},(_,j)=>'<td>'+escVal(cars[i*3+j])+'</td>').join('')+'</tr>';
  }).join('');
- $('report').innerHTML=`
+ pageHtml.push(`
  <div class="reportmeta"><b>作　業　日　報 （伐採交渉・<span class="circled-work">工事</span>）</b><span class="report-date"><strong>${escVal(state.date)}</strong>　<span class="report-weather">天候（　）</span></span><b>鹿屋 営業所</b></div>
  <table class="reporttable report-main"><colgroup><col style="width:9%"><col style="width:20%"><col span="3" style="width:4.4%"><col style="width:7%"><col span="3" style="width:4.4%"><col style="width:7%"><col style="width:4.4%"><col style="width:9%"><col style="width:17%"></colgroup>
  <thead><tr><th rowspan="2">付託 No.</th><th rowspan="2">電柱番号</th><th colspan="3">杉・桧</th><th colspan="3">雑木</th><th colspan="2">竹</th><th rowspan="2">かずら<br>61</th><th rowspan="2">工量計</th><th rowspan="2">備考</th></tr>
@@ -516,7 +519,11 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
  <table class="reporttable report-footer"><tr><th style="width:9%">作業場所</th><td style="width:37%">自所</td><th style="width:9%">稼働時間</th><td style="width:15%">始 ${escVal(state.workStart||"08:00")} ／ 終 ${escVal(state.workEnd||"17:00")}</td><th style="width:7%">メモ</th><td></td></tr></table>
  <div class="report-bottom"><table class="reporttable report-work"><tr><th>作業内容</th></tr><tr><td style="height:62px">② 工事</td></tr></table>
  <table class="reporttable report-crew"><thead><tr><th>事業区分</th><th>班長名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>車両 No.</th><th>車両 No.</th><th>車両 No.</th></tr></thead><tbody>${crew}</tbody></table></div>
- <div class="report-copyright">伐採交渉・工事　作業日報</div>`;
+ <div class="report-copyright">伐採交渉・工事　作業日報</div>`);
+ }
+ window.reportPages=pageHtml;window.reportPageIndex=0;
+ $('report').innerHTML=pageHtml[0];
+ updateReportPager();
  lastReportedIds=indexes.slice();
  $('deleteReported').disabled=false;
  document.activeElement?.blur();
@@ -649,7 +656,7 @@ async function createReportPDFFallback(){
   fc.drawImage(canvas,0,0,2244,1588,0,0,2244,1588);
   fc.strokeStyle="#555";fc.lineWidth=2;fc.beginPath();fc.moveTo(5,794);fc.lineTo(76,794);fc.stroke();
   const finalJpg=await new Promise((resolve,reject)=>fitted.toBlob(b=>b?resolve(b):reject(Error('PDF画像変換失敗')),'image/jpeg',.95));
-  return buildPDFWithJPEG(new Uint8Array(await finalJpg.arrayBuffer()),fitted.width,fitted.height);
+  return {jpg:new Uint8Array(await finalJpg.arrayBuffer()),W:fitted.width,H:fitted.height};
  }finally{
   extra.remove();if(oldStyle===null)root.removeAttribute('style');else root.setAttribute('style',oldStyle);
  }
@@ -686,24 +693,26 @@ async function createReportPDF(){
     ctx.strokeStyle="#555";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(5,794);ctx.lineTo(76,794);ctx.stroke();
     const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.96));
     if(!blob||blob.size<3000)throw new Error('PDF画像を作成できませんでした');
-    return buildPDFWithJPEG(new Uint8Array(await blob.arrayBuffer()),cv.width,cv.height);
+    return {jpg:new Uint8Array(await blob.arrayBuffer()),W:cv.width,H:cv.height};
   }finally{URL.revokeObjectURL(url)}
 }
 
-function buildPDFWithJPEG(jpg,W,H){
+function buildPDFWithPages(images){
  const encoder=new TextEncoder(),chunks=[],offsets=[0];let length=0;
  const add=b=>{chunks.push(b);length+=b.length};const str=t=>add(encoder.encode(t));
  str('%PDF-1.4\n');
  function obj(n,body){offsets[n]=length;str(n+' 0 obj\n'+body+'\nendobj\n')}
+ const ids=images.map((_,i)=>({page:3+i*3,img:4+i*3,content:5+i*3}));
  obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
- obj(2,'<< /Type /Pages /Kids [3 0 R] /Count 1 >>');
- obj(3,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>');
- offsets[4]=length;str('4 0 obj\n<< /Type /XObject /Subtype /Image /Width '+W+' /Height '+H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n');add(jpg);str('\nendstream\nendobj\n');
- const cmd='q 841.89 0 0 595.28 0 0 cm /Im0 Do Q\n';
- obj(5,'<< /Length '+encoder.encode(cmd).length+' >>\nstream\n'+cmd+'endstream');
- const xref=length;str('xref\n0 6\n0000000000 65535 f \n');
- for(let i=1;i<=5;i++)str(String(offsets[i]).padStart(10,'0')+' 00000 n \n');
- str('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
+ obj(2,'<< /Type /Pages /Kids ['+ids.map(x=>x.page+' 0 R').join(' ')+'] /Count '+images.length+' >>');
+ images.forEach(({jpg,W,H},i)=>{
+  const id=ids[i];obj(id.page,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /XObject << /Im0 '+id.img+' 0 R >> >> /Contents '+id.content+' 0 R >>');
+  offsets[id.img]=length;str(id.img+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+W+' /Height '+H+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+jpg.length+' >>\nstream\n');add(jpg);str('\nendstream\nendobj\n');
+  const cmd='q 841.89 0 0 595.28 0 0 cm /Im0 Do Q\n';obj(id.content,'<< /Length '+encoder.encode(cmd).length+' >>\nstream\n'+cmd+'endstream');
+ });
+ const size=3+images.length*3,xref=length;str('xref\n0 '+size+'\n0000000000 65535 f \n');
+ for(let i=1;i<size;i++)str(String(offsets[i]).padStart(10,'0')+' 00000 n \n');
+ str('trailer\n<< /Size '+size+' /Root 1 0 R >>\nstartxref\n'+xref+'\n%%EOF');
  const bytes=new Uint8Array(length);let at=0;for(const part of chunks){bytes.set(part,at);at+=part.length}
  return new Blob([bytes],{type:'application/pdf'});
 }
@@ -711,7 +720,7 @@ $('previewPrint').textContent='印刷';
 $('previewPrint').onclick=async()=>{
  const button=$('previewPrint');button.disabled=true;button.textContent='印刷の準備中…';
  try{
-  let blob;try{blob=await createReportPDF()}catch(originalError){console.warn('Safari画像化失敗、代替方式で作成',originalError);blob=await createReportPDFFallback()}const filename='作業日報_'+(state.date||'').replace(/[^0-9-]/g,'')+'.pdf';
+  const originalPage=window.reportPageIndex||0;const images=[];try{for(let i=0;i<(window.reportPages||[]).length;i++){showReportPage(i);let result;try{result=await createReportPDF()}catch(originalError){console.warn('Safari画像化失敗、代替方式で作成',originalError);result=await createReportPDFFallback()}images.push(result)}}finally{showReportPage(originalPage)}const blob=buildPDFWithPages(images);const filename='作業日報_'+(state.date||'').replace(/[^0-9-]/g,'')+'.pdf';
   const file=new File([blob],filename,{type:'application/pdf'});
   if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
    try{await navigator.share({files:[file],title:'作業日報'});return}catch(e){if(e.name==='AbortError')return}
