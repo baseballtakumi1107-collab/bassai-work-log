@@ -136,7 +136,7 @@
  #report .summary-box .total-inline b{font-size:9px!important}
  #report .report-footer th,#report .report-footer td{height:31px!important}
  #report .report-bottom{margin-top:3px!important;gap:3px!important}
- #report .report-work td{height:42px!important}
+ #report .report-work td{height:37px!important}
  #report .report-crew tbody tr{height:17px!important}
  #report .report-copyright{font-size:6px!important;margin-top:1px!important}
  #report table,#report tr,#report .report-bottom{break-inside:avoid!important;page-break-inside:avoid!important}
@@ -294,7 +294,27 @@
  #report .reportmeta{margin-bottom:3px!important}
  #report .report-bottom{margin-top:3px!important}
 }
-</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
+
+/* 10/17 修正版：確認画面・PDFの寸法を統一 */
+.report-preview.show #report{width:1122px!important;height:794px!important;min-height:794px!important;padding:10px!important;overflow:hidden!important}
+#report .report-main .data-row,#report .report-main .blank-row{height:37px!important}
+#report .report-main thead tr{height:32px!important}
+#report .report-footer th,#report .report-footer td{height:29px!important}
+#report .report-work td{height:50px!important}
+#report .report-crew tbody tr{height:23px!important}
+#report .report-bottom{margin-top:3px!important}
+#report .heavy-label.circled:after{inset:-3px -4px;border:1.6px solid #111;border-radius:50%}
+#report .reportnote .note-split>.heavy-label{flex-basis:25%!important;border-right:1px solid #222!important}
+@media print{
+ @page{size:A4 landscape;margin:0}
+ #reportPreview #report{width:297mm!important;height:210mm!important;min-height:210mm!important;max-height:210mm!important;padding:2.65mm!important;overflow:hidden!important}
+ #report .report-main .data-row,#report .report-main .blank-row{height:37px!important}
+ #report .report-main thead tr{height:32px!important}
+ #report .report-footer th,#report .report-footer td{height:29px!important}
+ #report .report-work td{height:50px!important}
+ #report .report-crew tbody tr{height:23px!important}
+}
+</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一・余白調整版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー</h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
 <div class="multi-block"><label>班長名<input id="leader" placeholder="班長名を入力" autocomplete="off"></label><h4>班員</h4><div id="crewRows"></div><button type="button" id="addCrew">＋ 班員を追加</button></div>
@@ -571,15 +591,15 @@ async function createReportPDFFallback(){
  const root=$('report'), width=1122, height=794;
  const canvas=document.createElement('canvas');canvas.width=2244;canvas.height=1588;
  const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
- const extra=document.createElement('style');extra.textContent='#report .report-main .data-row,#report .report-main .blank-row{height:31px!important}#report .report-main thead tr{height:24px!important}#report .report-footer th,#report .report-footer td{height:31px!important}#report .report-crew tbody tr{height:29px!important}';document.head.appendChild(extra);
+ const extra=document.createElement('style');extra.textContent='#report .report-main .data-row,#report .report-main .blank-row{height:37px!important}#report .report-main thead tr{height:32px!important}#report .report-footer th,#report .report-footer td{height:29px!important}#report .report-crew tbody tr{height:23px!important}';document.head.appendChild(extra);
  const oldStyle=root.getAttribute('style');
  root.style.setProperty('width',width+'px','important');
  root.style.setProperty('min-height','0','important');
  root.style.setProperty('height','auto','important');
- root.style.setProperty('padding','18px','important');
+ root.style.setProperty('padding','10px','important');
  root.style.setProperty('box-sizing','border-box','important');
  const base=root.getBoundingClientRect();
- const offsetX=18,offsetY=18;
+ const offsetX=0,offsetY=0;
  const pos=r=>({x:r.left-base.left+offsetX,y:r.top-base.top+offsetY,w:r.width,h:r.height});
  try{
   const walk=el=>{
@@ -618,9 +638,9 @@ async function createReportPDFFallback(){
   const jpg=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('画像を保存できません')),'image/jpeg',.95));
   const fitted=document.createElement('canvas');fitted.width=2244;fitted.height=1588;
   const fc=fitted.getContext('2d');fc.fillStyle='white';fc.fillRect(0,0,fitted.width,fitted.height);
-  const contentHeight=Math.min(794,Math.max(420,root.scrollHeight+36));
-  const drawW=2110,drawH=Math.min(1560,drawW*contentHeight/1122);
-  fc.drawImage(canvas,0,0,2244,Math.round(contentHeight*2),108,(1588-drawH)/2,drawW,drawH);
+  const contentHeight=794;
+  const drawW=2244,drawH=1588;
+  fc.drawImage(canvas,0,0,2244,Math.round(contentHeight*2),0,0,drawW,drawH);
   fc.strokeStyle='#777';fc.lineWidth=2;fc.beginPath();fc.moveTo(8,794);fc.lineTo(32,794);fc.stroke();
   const finalJpg=await new Promise((resolve,reject)=>fitted.toBlob(b=>b?resolve(b):reject(Error('PDF画像変換失敗')),'image/jpeg',.95));
   return buildPDFWithJPEG(new Uint8Array(await finalJpg.arrayBuffer()),fitted.width,fitted.height);
@@ -635,17 +655,17 @@ async function createReportPDF(){
   const report=$('report');
   const clone=report.cloneNode(true);
   // IDを残さないと #report に対する表のスタイルがPDFから消えてしまう。
-  clone.setAttribute('style','display:block!important;position:static!important;width:1122px!important;height:794px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:24px!important;background:#fff!important;color:#111!important;box-shadow:none!important;overflow:hidden!important;box-sizing:border-box!important');
+  clone.setAttribute('style','display:block!important;position:static!important;width:1122px!important;height:794px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:10px!important;background:#fff!important;color:#111!important;box-shadow:none!important;overflow:hidden!important;box-sizing:border-box!important');
   const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
-  const override=`#report{display:block!important;width:1122px!important;height:794px!important;padding:24px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
+  const override=`#report{display:block!important;width:1122px!important;height:794px!important;padding:10px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
   #report .reporttable{font-size:12px!important;line-height:1.2!important}
-  #report .report-main .data-row,#report .report-main .blank-row{height:42px!important}
-  #report .report-main thead tr{height:34px!important}
+  #report .report-main .data-row,#report .report-main .blank-row{height:37px!important}
+  #report .report-main thead tr{height:32px!important}
   #report .reporttable td,#report .reporttable th{padding:1px!important}
-  #report .report-footer th,#report .report-footer td{height:34px!important}
-  #report .report-work td{height:55px!important}
-  #report .report-crew tbody tr{height:29px!important}
-  #report .report-bottom{margin-top:5px!important}
+  #report .report-footer th,#report .report-footer td{height:29px!important}
+  #report .report-work td{height:50px!important}
+  #report .report-crew tbody tr{height:23px!important}
+  #report .report-bottom{margin-top:3px!important}
   #report .reportmeta{font-size:13px!important} #report .reportmeta b:first-child{font-size:18px!important} #report .reportmeta .report-date strong{font-size:18px!important;font-weight:700!important;letter-spacing:0!important} #report .reportmeta .report-weather{font-size:12px!important} #report .heavy-label,#report .report-main .reportnote .total-inline,#report .report-main .reportnote .total-inline b{font-size:11px!important} #report .nowrap-head{font-size:10px!important}`;
   const content=`<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><style>${css.replace(/<\/style/gi,'')}\n${override}</style></head><body style="margin:0;background:white">${clone.outerHTML}</body></html>`;
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'"><foreignObject width="100%" height="100%">'+content+'</foreignObject></svg>';
@@ -656,8 +676,8 @@ async function createReportPDF(){
     img.src=url;await loaded;
     const cv=document.createElement('canvas');cv.width=2244;cv.height=1588;
     const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);const contentHeight=height;
-    const drawW=2110,drawH=Math.min(1560,drawW*contentHeight/width);
-    ctx.drawImage(img,0,0,width,contentHeight,108,(cv.height-drawH)/2,drawW,drawH);
+    const drawW=2244,drawH=1588;
+    ctx.drawImage(img,0,0,width,contentHeight,0,0,drawW,drawH);
     ctx.strokeStyle='#777';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(8,794);ctx.lineTo(32,794);ctx.stroke();
     const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.96));
     if(!blob||blob.size<3000)throw new Error('PDF画像を作成できませんでした');
