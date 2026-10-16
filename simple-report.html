@@ -134,7 +134,7 @@
  #report .report-main thead tr{height:18px!important}
  #report .summary-box .total-inline{height:16px!important;font-size:8px!important;padding:0 3px!important}
  #report .summary-box .total-inline b{font-size:9px!important}
- #report .report-footer th,#report .report-footer td{height:19px!important}
+ #report .report-footer th,#report .report-footer td{height:31px!important}
  #report .report-bottom{margin-top:3px!important;gap:3px!important}
  #report .report-work td{height:42px!important}
  #report .report-crew tbody tr{height:17px!important}
@@ -210,8 +210,8 @@
  body>#reportPreview{display:block!important;position:fixed!important;inset:0!important;overflow:hidden!important;background:#fff!important}
  #reportPreview>.preview-scroll{display:block!important;position:absolute!important;inset:0!important;overflow:hidden!important;padding:0!important;margin:0!important}
  #reportPreview #report{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;height:auto!important;min-height:0!important;max-height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;box-shadow:none!important}
- #report .report-main .data-row,#report .report-main .blank-row{height:19px!important}
- #report .report-main thead tr{height:19px!important}
+ #report .report-main .data-row,#report .report-main .blank-row{height:31px!important}
+ #report .report-main thead tr{height:31px!important}
  #report .reporttable{font-size:10px!important;line-height:1.1!important}
  #report .reporttable td,#report .reporttable th{padding:1px!important}
  #report .report-footer th,#report .report-footer td{height:25px!important}
@@ -232,7 +232,7 @@
  #report .report-main {width:100%!important;table-layout:fixed!important}
  #report .report-bottom {width:100%!important}
  #report .reporttable {font-size:10px!important}
- #report .report-main .data-row,#report .report-main .blank-row {height:19px!important}
+ #report .report-main .data-row,#report .report-main .blank-row {height:31px!important}
 }
 #report .nowrap-head{white-space:nowrap;display:inline-block;font-size:8px;letter-spacing:-.35px} @media print{#report .nowrap-head{font-size:8px!important}}
 
@@ -467,6 +467,7 @@ async function createReportPDFFallback(){
  const root=$('report'), width=1122, height=794;
  const canvas=document.createElement('canvas');canvas.width=2244;canvas.height=1588;
  const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
+ const extra=document.createElement('style');extra.textContent='#report .report-main .data-row,#report .report-main .blank-row{height:31px!important}#report .report-main thead tr{height:24px!important}#report .report-footer th,#report .report-footer td{height:31px!important}#report .report-crew tbody tr{height:24px!important}';document.head.appendChild(extra);
  const oldStyle=root.getAttribute('style');
  root.style.setProperty('width',width+'px','important');
  root.style.setProperty('min-height','0','important');
@@ -519,7 +520,7 @@ async function createReportPDFFallback(){
   const finalJpg=await new Promise((resolve,reject)=>fitted.toBlob(b=>b?resolve(b):reject(Error('PDF画像変換失敗')),'image/jpeg',.95));
   return buildPDFWithJPEG(new Uint8Array(await finalJpg.arrayBuffer()),fitted.width,fitted.height);
  }finally{
-  if(oldStyle===null)root.removeAttribute('style');else root.setAttribute('style',oldStyle);
+  extra.remove();if(oldStyle===null)root.removeAttribute('style');else root.setAttribute('style',oldStyle);
  }
 }
 
@@ -533,8 +534,8 @@ async function createReportPDF(){
   const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
   const override=`#report{display:block!important;width:1122px!important;height:794px!important;padding:18px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
   #report .reporttable{font-size:10px!important;line-height:1.12!important}
-  #report .report-main .data-row,#report .report-main .blank-row{height:19px!important}
-  #report .report-main thead tr{height:19px!important}
+  #report .report-main .data-row,#report .report-main .blank-row{height:31px!important}
+  #report .report-main thead tr{height:31px!important}
   #report .reporttable td,#report .reporttable th{padding:1px!important}
   #report .report-footer th,#report .report-footer td{height:25px!important}
   #report .report-work td{height:45px!important}
@@ -548,7 +549,7 @@ async function createReportPDF(){
     const loaded=new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('日報の画像化に失敗しました'));setTimeout(()=>reject(new Error('画像化がタイムアウトしました')),8000)});
     img.src=url;await loaded;
     const cv=document.createElement('canvas');cv.width=2244;cv.height=1588;
-    const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);const contentHeight=Math.min(height,Math.max(420,report.scrollHeight+30));
+    const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);const contentHeight=height;
     const drawW=2152,drawH=Math.min(1512,drawW*contentHeight/width);
     ctx.drawImage(img,0,0,width,contentHeight,24,(cv.height-drawH)/2,drawW,drawH);
     const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.96));
