@@ -470,7 +470,27 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
   }
  });
 }
-function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function renderRates(){let h='<div class="scroll"><table><tr><th>樹種</th>'+cuts.map(c=>'<th>'+c+'</th>').join('')+'</tr>';for(const t of trees){h+='<tr><th>'+t+'</th>';for(const c of cuts){let k=t+'|'+c;if(!allowed(t,c)){h+='<td class="unavailable"></td>';continue;}h+='<td><input style="width:66px;padding:6px" type="number" min="0" data-rate="'+k+'" value="'+(state.rates[k]??'')+'" placeholder="未設定"></td>'}h+='</tr>'}h+='</table></div>';$('rates').innerHTML=h;document.querySelectorAll('[data-rate]').forEach(e=>e.onchange=()=>{if(e.value==='')delete state.rates[e.dataset.rate];else if(Number(e.value)>=0)state.rates[e.dataset.rate]=Number(e.value);saveState();renderMatrix();renderSaved()})}function renderAll(){renderMatrix();renderSaved();renderRates();renderHistory()}renderAll();$('leader').addEventListener('input',e=>{state.leader=e.target.value;saveState()});$('print').onclick=()=>{
+function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}function renderRates(){let h='<div class="scroll"><table><tr><th>樹種</th>'+cuts.map(c=>'<th>'+c+'</th>').join('')+'</tr>';for(const t of trees){h+='<tr><th>'+t+'</th>';for(const c of cuts){let k=t+'|'+c;if(!allowed(t,c)){h+='<td class="unavailable"></td>';continue;}h+='<td><input style="width:66px;padding:6px" type="number" min="0" data-rate="'+k+'" value="'+(state.rates[k]??'')+'" placeholder="未設定"></td>'}h+='</tr>'}h+='</table></div>';$('rates').innerHTML=h;document.querySelectorAll('[data-rate]').forEach(e=>e.onchange=()=>{if(e.value==='')delete state.rates[e.dataset.rate];else if(Number(e.value)>=0)state.rates[e.dataset.rate]=Number(e.value);saveState();renderMatrix();renderSaved()})}function renderAll(){renderMatrix();renderSaved();renderRates();renderHistory()}renderAll();$('leader').addEventListener('input',e=>{state.leader=e.target.value;saveState()});// ページ切替処理（プレビューを開く前に定義）
+function updateReportPager(){
+ const pages=window.reportPages||[];
+ const index=window.reportPageIndex||0;
+ const pager=$('reportPager');
+ pager.style.display=pages.length>1?'flex':'none';
+ $('pageIndicator').textContent=(index+1)+' / '+Math.max(1,pages.length)+' ページ';
+ $('pagePrev').disabled=index<=0;
+ $('pageNext').disabled=index>=pages.length-1;
+}
+function showReportPage(index){
+ const pages=window.reportPages||[];
+ if(!pages.length)return;
+ const safe=Math.max(0,Math.min(pages.length-1,index));
+ window.reportPageIndex=safe;
+ $('report').innerHTML=pages[safe];
+ updateReportPager();
+}
+$('pagePrev').onclick=()=>showReportPage((window.reportPageIndex||0)-1);
+$('pageNext').onclick=()=>showReportPage((window.reportPageIndex||0)+1);
+$('print').onclick=()=>{
  const indexes=[...selectedWorks].filter(i=>i>=0&&i<state.spans.length).sort((a,b)=>a-b);
  const items=indexes.map(i=>state.spans[i]);
  if(!items.length){alert('日報に載せる作業をチェックしてください');return}
