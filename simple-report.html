@@ -111,6 +111,36 @@
 #report .total-inline b{font-size:11px}
 #report .report-main td.reportnote{white-space:normal}
 @media print{#report .reportmeta b:first-child{font-size:15px}#report .report-main .data-row,#report .report-main .blank-row{height:18px}#report .report-footer th,#report .report-footer td{height:25px}#report .report-crew tbody tr{height:21px}}
+
+/* 印刷専用: A4横1枚、ヘッダーと表と班員欄を分割しない */
+#report .summary-under{display:flex;justify-content:flex-end;margin-top:-1px}
+#report .summary-box{width:17%;border:1px solid #222;box-sizing:border-box}
+#report .summary-box .total-inline{height:18px;box-sizing:border-box}
+@media print{
+ @page{size:A4 landscape;margin:5mm}
+ html,body{width:auto!important;height:auto!important;margin:0!important;padding:0!important;overflow:visible!important}
+ body{background:#fff!important}
+ body>*:not(#report):not(#reportPreview):not(.print-control){display:none!important}
+ #report{display:block!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;padding:0!important;margin:0!important;box-sizing:border-box!important;font-size:8px!important}
+ #reportPreview{display:block!important;position:static!important;height:auto!important;min-height:0!important;overflow:visible!important}
+ #reportPreview .preview-tools{display:none!important}
+ #reportPreview .preview-scroll{display:block!important;overflow:visible!important;height:auto!important;padding:0!important;margin:0!important}
+ #reportPreview #report{width:100%!important;min-height:0!important;padding:0!important;margin:0!important;box-shadow:none!important}
+ #report .reportmeta{font-size:9px!important;padding:0 2px 3px!important}
+ #report .reportmeta b:first-child{font-size:13px!important}
+ #report .reporttable{font-size:8px!important;line-height:1.1!important}
+ #report .reporttable th,#report .reporttable td{padding:1px!important}
+ #report .report-main .data-row,#report .report-main .blank-row{height:16px!important;max-height:16px!important}
+ #report .report-main thead tr{height:18px!important}
+ #report .summary-box .total-inline{height:16px!important;font-size:8px!important;padding:0 3px!important}
+ #report .summary-box .total-inline b{font-size:9px!important}
+ #report .report-footer th,#report .report-footer td{height:19px!important}
+ #report .report-bottom{margin-top:3px!important;gap:3px!important}
+ #report .report-work td{height:42px!important}
+ #report .report-crew tbody tr{height:17px!important}
+ #report .report-copyright{font-size:6px!important;margin-top:1px!important}
+ #report table,#report tr,#report .report-bottom{break-inside:avoid!important;page-break-inside:avoid!important}
+}
 </style></head><body><header>簡単日報｜集計表入力</header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
@@ -193,8 +223,10 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
   return '<tr class="data-row"><td>'+escVal(same?'〃':s.futaku)+'</td><td>'+escVal(same?'〃':s.pole)+'</td>'+vals+'<td>'+c.work+(c.unknown.length?'※':'')+'</td><td class="reportnote"><span class="heavy-label'+(s.heavy==='yes'?' circled':'')+'">重機</span></td></tr>';
  }).join('');
  const blank=Math.max(0,15-items.length);
- rows+=Array.from({length:blank},()=>'<tr class="blank-row">'+Array(11).fill('<td>&nbsp;</td>').join('')+'<td class="reportnote"><span class="heavy-label">重機</span></td>'+'</tr>').join('');
+ rows+=Array.from({length:blank},(_,i)=>'<tr class="blank-row">'+Array(11).fill('<td>&nbsp;</td>').join('')+'<td class="reportnote"><span class="heavy-label">重機</span></td>'+'</tr>').join('');
  const distinct=new Set(items.map(s=>s.group||s.futaku+'|'+s.pole)).size;
+ // 完了径間・工事合計は備考欄の末尾2段へ。左側に空白の集計行を作らない。
+ const summaryRows='<tr class="summary-row"><td colspan="11" class="extended-grid"></td><td class="reportnote"><div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div></td></tr><tr class="summary-row"><td colspan="11" class="extended-grid"></td><td class="reportnote"><div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div></td></tr>';
  
  const cars=(state.vehicleList||[]).filter(Boolean),names=(state.crewList||[]).filter(Boolean);
  const count=Math.max(3,Math.ceil(names.length/3),Math.ceil(cars.length/3));
@@ -206,7 +238,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
  <div class="reportmeta"><b>作　業　日　報 （伐採交渉・<span class="circled-work">工事</span>）</b><span>${escVal(state.date)}　天候（　）</span><b>鹿屋 営業所</b></div>
  <table class="reporttable report-main"><colgroup><col style="width:10%"><col style="width:24%"><col span="8" style="width:5%"><col style="width:9%"><col style="width:17%"></colgroup>
  <thead><tr><th rowspan="2">付託 No.</th><th rowspan="2">電柱番号</th><th colspan="3">杉・桧</th><th colspan="3">雑木</th><th colspan="2">竹</th><th rowspan="2">工量計</th><th rowspan="2">備考</th></tr>
- <tr><th>根切<br>105</th><th>芯止<br>68</th><th>小枝<br>43</th><th>根切・芯止<br>40</th><th>大枝<br>78</th><th>小枝<br>34</th><th>一般<br>7</th><th>小雑・女竹<br>77</th></tr></thead><tbody>${rows}<tr class="reportTotal"><td></td><td class="pole-extension"></td><td colspan="9"></td><th class="reportnote" style="padding:0"><div class="total-inline"><span>完了径間</span><b>${distinct}（径間）</b></div><div class="total-inline"><span>工事合計</span><b>${total}（工量）</b></div></th></tr></tbody></table>
+ <tr><th>根切<br>105</th><th>芯止<br>68</th><th>小枝<br>43</th><th>根切・芯止<br>40</th><th>大枝<br>78</th><th>小枝<br>34</th><th>一般<br>7</th><th>小雑・女竹<br>77</th></tr></thead><tbody>${rows}</tbody></table><div class="summary-under"><div class="summary-box"><div class="total-inline"><span>完了径間</span><b>${distinct}（径間）</b></div><div class="total-inline"><span>工事合計</span><b>${total}（工量）</b></div></div></div>
  <table class="reporttable report-footer"><tr><th style="width:9%">作業場所</th><td style="width:37%">自所</td><th style="width:9%">稼働時間</th><td style="width:15%">始 ${escVal(state.workStart||"08:00")} ／ 終 ${escVal(state.workEnd||"17:00")}</td><th style="width:7%">メモ</th><td></td></tr></table>
  <div class="report-bottom"><table class="reporttable report-work"><tr><th>作業内容</th></tr><tr><td style="height:62px">② 工事</td></tr></table>
  <table class="reporttable report-crew"><thead><tr><th>事業区分</th><th>班長名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>車両 No.</th><th>車両 No.</th><th>車両 No.</th></tr></thead><tbody>${crew}</tbody></table></div>
@@ -217,7 +249,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
  const style=document.querySelector('style').textContent;
  const w=window.open('','_blank');
  if(!w){alert('印刷ページを開けませんでした。Safariのポップアップ設定を確認してください');return}
- w.document.open();w.document.write('<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>作業日報・印刷</title><style>'+style+'\nbody{background:#fff!important;color:#111!important;margin:0!important}#report{display:block!important;visibility:visible!important;width:100%!important;padding:0!important} .print-control{display:block;padding:12px;background:#eee;text-align:center} .print-control button{font-size:17px;padding:10px 25px} @media print{body>*:not(#reportPreview){display:block!important} body>.print-control{display:none!important} #report{display:block!important;visibility:visible!important} @page{size:A4 landscape;margin:6mm}}</style></head><body><div class="print-control"><button onclick="window.print()">この日報を印刷する</button><p>印刷画面では用紙をA4・横向きにしてください</p></div><section id="report">'+report+'</section></body></html>');w.document.close();w.focus();
+ w.document.open();w.document.write('<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>作業日報・印刷</title><style>'+style+'\nbody{background:#fff!important;color:#111!important;margin:0!important}#report{display:block!important;visibility:visible!important;width:100%!important;padding:0!important} .print-control{display:block;padding:12px;background:#eee;text-align:center} .print-control button{font-size:17px;padding:10px 25px} @media print{body>*:not(#reportPreview){display:block!important} body>.print-control{display:none!important} body>#report{display:block!important;visibility:visible!important} @page{size:A4 landscape;margin:6mm}}</style></head><body><div class="print-control"><button onclick="window.print()">この日報を印刷する</button><p>印刷画面では用紙をA4・横向きにしてください</p></div><section id="report">'+report+'</section></body></html>');w.document.close();w.focus();
 };$('export').onclick=()=>{let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));a.download='簡単日報バックアップ.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};$('import').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let x=JSON.parse(await f.text());if(!Array.isArray(x.spans))throw Error();if(confirm('現在のデータをバックアップ内容で置き換えますか？')){state={...state,...x};state.histories=state.histories||{futaku:[],poles:[],vehicles:[],crews:[]};saveState();sync();renderAll()}}catch{alert('バックアップ形式を確認してください')}};
 
 // 複数車両・複数班員（旧データの文字列からも移行）
