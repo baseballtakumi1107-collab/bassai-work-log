@@ -271,6 +271,26 @@
 @media(max-width:700px){input,select,textarea{font-size:16px!important}}
 .futaku-line .futaku-branch{position:relative}
 .futaku-line .futaku-branch label{position:relative;display:block}
+
+/* v13: 15行を用紙の高さに広げ、備考の集計行も重機を残す */
+#report .reportnote .note-split{display:flex;align-items:stretch;width:100%;height:100%;min-height:32px}
+#report .reportnote .note-split>.heavy-label{display:flex;align-items:center;justify-content:center;flex:0 0 25%;white-space:nowrap}
+#report .reportnote .note-split>.total-inline{border-left:1px solid #333!important;flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;padding-left:4px!important;font-size:10px!important;white-space:nowrap}
+#report .report-main td.reportnote:has(.note-split){padding:0!important}
+@media print{
+ @page{size:A4 landscape;margin:0}
+ html,body{margin:0!important;padding:0!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
+ body>#reportPreview{position:static!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
+ #reportPreview>.preview-scroll{position:static!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
+ #reportPreview #report{position:relative!important;top:0!important;left:0!important;display:block!important;width:297mm!important;height:210mm!important;min-height:210mm!important;max-height:210mm!important;box-sizing:border-box!important;padding:3mm 3mm 2mm 14mm!important;margin:0!important;overflow:hidden!important}
+ #report .report-main .data-row,#report .report-main .blank-row{height:39px!important}
+ #report .report-main thead tr{height:33px!important}
+ #report .report-footer th,#report .report-footer td{height:29px!important}
+ #report .report-work td{height:50px!important}
+ #report .report-crew tbody tr{height:23px!important}
+ #report .reportmeta{margin-bottom:3px!important}
+ #report .report-bottom{margin-top:3px!important}
+}
 </style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー</h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
@@ -449,8 +469,8 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
      heavy='<span class="heavy-label'+(s.heavy==='yes'?' circled':'')+'">重機</span>';
    }else{cells=Array(12).fill('<td>&nbsp;</td>').join('');heavy='<span class="heavy-label">重機</span>'}
    let note=heavy;
-   if(i===allRows.length-2)note='<div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div>';
-   if(i===allRows.length-1)note='<div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div>';
+   if(i===allRows.length-2)note='<div class="note-split">'+heavy+'<div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div></div>';
+   if(i===allRows.length-1)note='<div class="note-split">'+heavy+'<div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div></div>';
    return '<tr class="'+(s?'data-row':'blank-row')+'">'+cells+'<td class="reportnote">'+note+'</td></tr>';
  }).join('');
  const cars=(state.vehicleList||[]).filter(Boolean),names=(state.crewList||[]).filter(Boolean);
