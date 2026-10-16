@@ -317,6 +317,9 @@
  #report .report-main .data-row,#report .report-main .blank-row{height:35px!important}
  #report .report-main thead tr{height:30px!important}
 }
+/* 左側の穴あけ余白：用紙の高さ中央に短い位置合わせ線 */
+.report-preview.show #report::after{content:"";position:absolute!important;left:2px;top:50%;width:36px;height:0;border-top:1px solid #555;pointer-events:none;z-index:3}
+.report-preview.show #report{position:relative!important}
 </style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー</h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
@@ -644,6 +647,7 @@ async function createReportPDFFallback(){
   const fc=fitted.getContext('2d');fc.fillStyle='white';fc.fillRect(0,0,fitted.width,fitted.height);
   const contentHeight=Math.min(794,Math.max(420,root.scrollHeight+36));
   fc.drawImage(canvas,0,0,2244,1588,0,0,2244,1588);
+  fc.strokeStyle="#555";fc.lineWidth=2;fc.beginPath();fc.moveTo(5,794);fc.lineTo(76,794);fc.stroke();
   const finalJpg=await new Promise((resolve,reject)=>fitted.toBlob(b=>b?resolve(b):reject(Error('PDF画像変換失敗')),'image/jpeg',.95));
   return buildPDFWithJPEG(new Uint8Array(await finalJpg.arrayBuffer()),fitted.width,fitted.height);
  }finally{
@@ -679,6 +683,7 @@ async function createReportPDF(){
     const cv=document.createElement('canvas');cv.width=2244;cv.height=1588;
     const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);const contentHeight=height;
     ctx.drawImage(img,0,0,width,contentHeight,0,0,cv.width,cv.height);
+    ctx.strokeStyle="#555";ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(5,794);ctx.lineTo(76,794);ctx.stroke();
     const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.96));
     if(!blob||blob.size<3000)throw new Error('PDF画像を作成できませんでした');
     return buildPDFWithJPEG(new Uint8Array(await blob.arrayBuffer()),cv.width,cv.height);
