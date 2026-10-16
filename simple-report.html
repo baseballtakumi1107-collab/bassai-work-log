@@ -272,11 +272,14 @@
 .futaku-line .futaku-branch{position:relative}
 .futaku-line .futaku-branch label{position:relative;display:block}
 
-/* v13: 15行を用紙の高さに広げ、備考の集計行も重機を残す */
-#report .reportnote .note-split{display:flex;align-items:stretch;width:100%;height:100%;min-height:32px}
-#report .reportnote .note-split>.heavy-label{display:flex;align-items:center;justify-content:center;flex:0 0 25%;white-space:nowrap}
-#report .reportnote .note-split>.total-inline{border-left:1px solid #333!important;flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;padding-left:4px!important;font-size:10px!important;white-space:nowrap}
-#report .report-main td.reportnote:has(.note-split){padding:0!important}
+/* v15: 集計行の重機を他の行と同じ左上位置に統一 */
+#report .reportnote .note-split{display:flex;align-items:stretch;width:100%;height:100%;min-height:0}
+#report .reportnote .note-split>.heavy-label{display:block;box-sizing:border-box;flex:0 0 25%;text-align:left;padding:2px 3px;white-space:nowrap;align-self:stretch;border-right:1px solid #333}
+#report .reportnote .note-split>.total-inline{box-sizing:border-box;border-left:0!important;align-self:stretch;height:100%!important;min-height:0!important;flex:1;min-width:0;display:flex;align-items:center;justify-content:space-between;padding-left:4px!important;font-size:10px!important;white-space:nowrap}
+#report .report-main td.reportnote:has(.note-split){padding:0!important;position:relative!important}
+#report .report-main td.reportnote:has(.note-split) .note-split{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+#report .report-main td.reportnote:has(.note-split) .heavy-label{font-size:inherit!important;font-weight:bold!important;line-height:1.2!important}
+#report .report-main td.reportnote:has(.note-split) .total-inline{height:100%!important}
 @media print{
  @page{size:A4 landscape;margin:0}
  html,body{margin:0!important;padding:0!important;width:297mm!important;height:210mm!important;overflow:hidden!important}
