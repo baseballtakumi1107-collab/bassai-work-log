@@ -235,7 +235,7 @@
  #report .report-main .data-row,#report .report-main .blank-row {height:19px!important}
 }
 #report .nowrap-head{white-space:nowrap;display:inline-block;font-size:8px;letter-spacing:-.35px} @media print{#report .nowrap-head{font-size:8px!important}}
-</style></head><body><header>簡単日報｜集計表入力</header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
+</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">修正版 10/16</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
 <div class="multi-block"><label>班長名<input id="leader" placeholder="班長名を入力" autocomplete="off"></label><h4>班員 <span class="muted">（6人以上も登録可能）</span></h4><div id="crewRows"></div><button type="button" id="addCrew">＋ 班員を追加</button></div>
@@ -385,7 +385,7 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
  state.spans=state.spans.filter((_,i)=>!toRemove.has(i));
  selectedWorks.clear();lastReportedIds=[];editIndex=null;
  $('deleteReported').disabled=true;saveState();renderSaved();
-};$('previewClose').onclick=()=>{$('reportPreview').classList.remove('show');$('reportPreview').setAttribute('aria-hidden','true');document.body.classList.remove('previewing')};$('previewPrint').onclick=()=>{window.print();return;
+};$('previewClose').onclick=()=>{$('reportPreview').classList.remove('show');$('reportPreview').setAttribute('aria-hidden','true');document.body.classList.remove('previewing')};$('previewPrint').onclick=()=>{document.activeElement?.blur();setTimeout(()=>window.print(),100);return;
 
  const report=$('report').innerHTML;
  const style=document.querySelector('style').textContent;
