@@ -198,6 +198,29 @@
  #report .report-crew tbody tr{height:21px!important}
  #report .heavy-label{font-size:10px!important}
 }
+
+/* 原本配置：集計は表内右下、直下に作業場所、続けて班員欄 */
+#report .report-main .reportnote .total-inline{height:100%;min-height:0;display:flex;justify-content:space-between;align-items:center;border:0;padding:0 2px;font-size:10px;white-space:nowrap}
+#report .report-main .reportnote .total-inline b{font-size:10px}
+#report .report-footer{margin-top:-1px!important}
+#report .report-bottom{margin-top:3px!important}
+@media print{
+ @page{size:A4 landscape;margin:4mm}
+ html,body{margin:0!important;padding:0!important;height:100%!important;overflow:hidden!important}
+ body>#reportPreview{display:block!important;position:fixed!important;inset:0!important;overflow:hidden!important;background:#fff!important}
+ #reportPreview>.preview-scroll{display:block!important;position:absolute!important;inset:0!important;overflow:hidden!important;padding:0!important;margin:0!important}
+ #reportPreview #report{display:block!important;position:absolute!important;left:0!important;top:0!important;width:100%!important;height:auto!important;min-height:0!important;max-height:100%!important;margin:0!important;padding:0!important;overflow:hidden!important;box-shadow:none!important}
+ #report .report-main .data-row,#report .report-main .blank-row{height:19px!important}
+ #report .report-main thead tr{height:19px!important}
+ #report .reporttable{font-size:10px!important;line-height:1.1!important}
+ #report .reporttable td,#report .reporttable th{padding:1px!important}
+ #report .report-footer th,#report .report-footer td{height:25px!important}
+ #report .report-work td{height:45px!important}
+ #report .report-crew tbody tr{height:20px!important}
+ #report .report-bottom{margin-top:3px!important}
+ #report .report-main .reportnote .total-inline{font-size:9px!important}
+ #report .report-main .reportnote .total-inline b{font-size:9px!important}
+}
 </style></head><body><header>簡単日報｜集計表入力</header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
@@ -273,18 +296,24 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
  ];
  const escVal=x=>esc(x==null?'':x);
  let prev='',total=0;
- let rows=items.map(s=>{
-  const group=s.group||s.futaku+'|'+s.pole,same=group===prev;prev=group;
-  const c=calc(s.cells);total+=c.work;
-  const vals=groups.map(g=>{let n=0;for(const t of g[0])for(const cut of g.slice(1))n+=allowed(t,cut)?Number(s.cells[t+'|'+cut]||0):0;return '<td>'+(n||'')+'</td>'}).join('');
-  return '<tr class="data-row"><td>'+escVal(same?'〃':s.futaku)+'</td><td>'+escVal(same?'〃':s.pole)+'</td>'+vals+'<td>'+c.work+(c.unknown.length?'※':'')+'</td><td class="reportnote"><span class="heavy-label'+(s.heavy==='yes'?' circled':'')+'">重機</span></td></tr>';
- }).join('');
- const blank=Math.max(0,15-items.length);
- rows+=Array.from({length:blank},(_,i)=>'<tr class="blank-row">'+Array(11).fill('<td>&nbsp;</td>').join('')+'<td class="reportnote">'+(i>=blank-2?'':'<span class="heavy-label">重機</span>')+'</td></tr>').join('');
  const distinct=new Set(items.map(s=>s.group||s.futaku+'|'+s.pole)).size;
- // 完了径間・工事合計は備考欄の末尾2段へ。左側に空白の集計行を作らない。
- const summaryRows='<tr class="summary-row"><td colspan="11" class="extended-grid"></td><td class="reportnote"><div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div></td></tr><tr class="summary-row"><td colspan="11" class="extended-grid"></td><td class="reportnote"><div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div></td></tr>';
- 
+ let prev='',total=items.reduce((n,s)=>n+calc(s.cells).work,0);
+ // 15行の表の右端、最後の2行に集計を埋め込む。余分な行を増やさない。
+ const allRows=Array.from({length:Math.max(15,items.length)},(_,i)=>items[i]||null);
+ let rows=allRows.map((s,i)=>{
+   let cells,heavy='';
+   if(s){
+     const group=s.group||s.futaku+'|'+s.pole,same=group===prev;prev=group;
+     const c=calc(s.cells);
+     const vals=groups.map(g=>{let n=0;for(const t of g[0])for(const cut of g.slice(1))n+=allowed(t,cut)?Number(s.cells[t+'|'+cut]||0):0;return '<td>'+(n||'')+'</td>'}).join('');
+     cells='<td>'+escVal(same?'〃':s.futaku)+'</td><td>'+escVal(same?'〃':s.pole)+'</td>'+vals+'<td>'+c.work+(c.unknown.length?'※':'')+'</td>';
+     heavy='<span class="heavy-label'+(s.heavy==='yes'?' circled':'')+'">重機</span>';
+   }else{cells=Array(11).fill('<td>&nbsp;</td>').join('');heavy='<span class="heavy-label">重機</span>'}
+   let note=heavy;
+   if(i===allRows.length-2)note='<div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div>';
+   if(i===allRows.length-1)note='<div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div>';
+   return '<tr class="'+(s?'data-row':'blank-row')+'">'+cells+'<td class="reportnote">'+note+'</td></tr>';
+ }).join('');
  const cars=(state.vehicleList||[]).filter(Boolean),names=(state.crewList||[]).filter(Boolean);
  const count=Math.max(3,Math.ceil(names.length/3),Math.ceil(cars.length/3));
  const crew=Array.from({length:count},(_,i)=>{
@@ -295,7 +324,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
  <div class="reportmeta"><b>作　業　日　報 （伐採交渉・<span class="circled-work">工事</span>）</b><span>${escVal(state.date)}　天候（　）</span><b>鹿屋 営業所</b></div>
  <table class="reporttable report-main"><colgroup><col style="width:10%"><col style="width:24%"><col span="8" style="width:5%"><col style="width:9%"><col style="width:17%"></colgroup>
  <thead><tr><th rowspan="2">付託 No.</th><th rowspan="2">電柱番号</th><th colspan="3">杉・桧</th><th colspan="3">雑木</th><th colspan="2">竹</th><th rowspan="2">工量計</th><th rowspan="2">備考</th></tr>
- <tr><th>根切<br>105</th><th>芯止<br>68</th><th>小枝<br>43</th><th>根切・芯止<br>40</th><th>大枝<br>78</th><th>小枝<br>34</th><th>一般<br>7</th><th>小雑・女竹<br>77</th></tr></thead><tbody>${rows}</tbody></table><div class="summary-under"><div class="summary-box"><div class="total-inline"><span>完了径間</span><b>${distinct}（径間）</b></div><div class="total-inline"><span>工事合計</span><b>${total}（工量）</b></div></div></div>
+ <tr><th>根切<br>105</th><th>芯止<br>68</th><th>小枝<br>43</th><th>根切・芯止<br>40</th><th>大枝<br>78</th><th>小枝<br>34</th><th>一般<br>7</th><th>小雑・女竹<br>77</th></tr></thead><tbody>${rows}</tbody></table>
  <table class="reporttable report-footer"><tr><th style="width:9%">作業場所</th><td style="width:37%">自所</td><th style="width:9%">稼働時間</th><td style="width:15%">始 ${escVal(state.workStart||"08:00")} ／ 終 ${escVal(state.workEnd||"17:00")}</td><th style="width:7%">メモ</th><td></td></tr></table>
  <div class="report-bottom"><table class="reporttable report-work"><tr><th>作業内容</th></tr><tr><td style="height:62px">② 工事</td></tr></table>
  <table class="reporttable report-crew"><thead><tr><th>事業区分</th><th>班長名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>車両 No.</th><th>車両 No.</th><th>車両 No.</th></tr></thead><tbody>${crew}</tbody></table></div>
