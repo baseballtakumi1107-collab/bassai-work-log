@@ -447,57 +447,26 @@ $('import').addEventListener('change',()=>{setTimeout(()=>{initMulti()},150)},fa
 
 // iPhoneホーム画面用：印刷APIに依存しないオフラインPDF出力
 async function createReportPDF(){
- const W=2100,H=1485,cv=document.createElement('canvas');cv.width=W;cv.height=H;
- const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,W,H);
- ctx.fillStyle='#111';ctx.strokeStyle='#111';ctx.lineWidth=1.7;
- const font=(size,bold=false)=>{ctx.font=(bold?'bold ':'')+size+'px "Hiragino Kaku Gothic ProN","Hiragino Mincho ProN",sans-serif';};
- function write(t,x,y,w,h,size=19,bold=false){
-  t=String(t||'').replace(/\s+/g,' ').trim();if(!t)return;
-  font(size,bold);while(ctx.measureText(t).width>w-10&&size>10){size--;font(size,bold)}
-  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(t,x+w/2,y+h/2,Math.max(10,w-8));
- }
- function grid(table,x,y,width,rowHeight,headerHeight){
-  const rows=[...table.rows],colN=Math.max(...rows.map(r=>[...r.cells].reduce((a,c)=>a+c.colSpan,0)));
-  let widths;
-  if(table.classList.contains('report-main'))widths=[.09,.20,.044,.044,.044,.07,.044,.044,.044,.07,.044,.09,.17];
-  else if(table.classList.contains('report-footer'))widths=[.09,.37,.09,.15,.07,.23];
-  else widths=Array(colN).fill(1/colN);
-  let total=widths.reduce((a,b)=>a+b,0);widths=widths.map(v=>v/total*width);
-  const xs=[x];widths.forEach(v=>xs.push(xs[xs.length-1]+v));
-  const heights=rows.map((_,i)=>i<(table.tHead?.rows.length||0)?headerHeight:rowHeight);
-  const ys=[y];heights.forEach(v=>ys.push(ys[ys.length-1]+v));
-  let occupied=new Set();
-  rows.forEach((r,ri)=>{let ci=0;[...r.cells].forEach(cell=>{
-   while(occupied.has(ri+':'+ci))ci++;
-   const cs=cell.colSpan||1,rs=cell.rowSpan||1;
-   let cw=xs[Math.min(ci+cs,colN)]-xs[ci],ch=ys[Math.min(ri+rs,rows.length)]-ys[ri];
-   ctx.strokeRect(xs[ci],ys[ri],cw,ch);
-   let value=cell.innerText||cell.textContent||'';
-   if(cell.classList.contains('reportnote'))value=value.replace(/\s+/g,' ');
-   write(value,xs[ci],ys[ri],cw,ch,ri<2?16:18,cell.tagName==='TH');
-   for(let rr=ri;rr<ri+rs;rr++)for(let cc=ci;cc<ci+cs;cc++)occupied.add(rr+':'+cc);
-   ci+=cs;
-  })});return ys[ys.length-1];
- }
- const margin=40,usable=W-2*margin;
- const meta=$('report').querySelector('.reportmeta');
- font(34,true);ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText('作 業 日 報（伐採交渉・工事）',margin,65);
- font(22);ctx.textAlign='right';ctx.fillText((state.date||'')+'　鹿屋 営業所',W-margin,65);
- let y=92;
- const main=$('report').querySelector('.report-main');
- y=grid(main,margin,y,usable,46,51);
- y+=8;
- const footer=$('report').querySelector('.report-footer');
- y=grid(footer,margin,y,usable,60,60);
- y+=12;
- const bottom=$('report').querySelector('.report-bottom');
- const work=bottom.querySelector('.report-work'),crew=bottom.querySelector('.report-crew');
- grid(work,margin,y,usable*.21,68,48);
- grid(crew,margin+usable*.22,y,usable*.78,50,48);
- // JPEGを単一ページのA4横PDFに埋め込む（外部ライブラリ・通信不要）
- const data=cv.toDataURL('image/jpeg',.91).split(',')[1];
- const binary=atob(data),jpg=new Uint8Array(binary.length);
- for(let i=0;i<binary.length;i++)jpg[i]=binary.charCodeAt(i);
+ // Render the actual report HTML instead of rebuilding its table with a separate grid engine.
+ const report=$('report');
+ const width=1100,height=780;
+ const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
+ const clone=report.cloneNode(true);
+ clone.removeAttribute('id');clone.setAttribute('style','display:block!important;position:static!important;width:1100px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:10px!important;background:white!important;color:black!important;box-shadow:none!important;box-sizing:border-box!important;font-family:serif!important');
+ const content=`<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><style>${css.replace(/<\/style/gi,'')}\n*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;background:white}#report{display:block!important}</style></head><body>${clone.outerHTML}</body></html>`;
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'"><foreignObject width="100%" height="100%">'+content+'</foreignObject></svg>';
+ const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+ try{
+  const img=new Image();img.src=url;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;setTimeout(()=>reject(new Error('画像化できませんでした')),6000)});
+  const cv=document.createElement('canvas');cv.width=2200;cv.height=1560;
+  const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width,cv.height);
+  const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.95));
+  if(!blob||blob.size<3000)throw new Error('日報の画像化に失敗しました');
+  const data=new Uint8Array(await blob.arrayBuffer());
+  return buildPDFWithJPEG(data,cv.width,cv.height);
+ }finally{URL.revokeObjectURL(url)}
+}
+function buildPDFWithJPEG(jpg,W,H){
  const encoder=new TextEncoder(),chunks=[],offsets=[0];let length=0;
  const add=b=>{chunks.push(b);length+=b.length};const str=t=>add(encoder.encode(t));
  str('%PDF-1.4\n');
