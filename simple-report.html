@@ -511,7 +511,12 @@ async function createReportPDFFallback(){
   };
   walk(root);
   const jpg=await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('画像を保存できません')),'image/jpeg',.95));
-  return buildPDFWithJPEG(new Uint8Array(await jpg.arrayBuffer()),canvas.width,canvas.height);
+  const fitted=document.createElement('canvas');fitted.width=2244;fitted.height=1588;
+  const fc=fitted.getContext('2d');fc.fillStyle='white';fc.fillRect(0,0,fitted.width,fitted.height);
+  const contentHeight=Math.min(794,Math.max(420,root.scrollHeight+36));
+  fc.drawImage(canvas,0,0,2244,Math.round(contentHeight*2),24,24,2196,1540);
+  const finalJpg=await new Promise((resolve,reject)=>fitted.toBlob(b=>b?resolve(b):reject(Error('PDF画像変換失敗')),'image/jpeg',.95));
+  return buildPDFWithJPEG(new Uint8Array(await finalJpg.arrayBuffer()),fitted.width,fitted.height);
  }finally{
   if(oldStyle===null)root.removeAttribute('style');else root.setAttribute('style',oldStyle);
  }
@@ -542,7 +547,8 @@ async function createReportPDF(){
     const loaded=new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('日報の画像化に失敗しました'));setTimeout(()=>reject(new Error('画像化がタイムアウトしました')),8000)});
     img.src=url;await loaded;
     const cv=document.createElement('canvas');cv.width=2244;cv.height=1588;
-    const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width,cv.height);
+    const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);const contentHeight=Math.min(height,Math.max(420,report.scrollHeight+30));
+    ctx.drawImage(img,0,0,width,contentHeight,24,24,2152,1512);
     const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.96));
     if(!blob||blob.size<3000)throw new Error('PDF画像を作成できませんでした');
     return buildPDFWithJPEG(new Uint8Array(await blob.arrayBuffer()),cv.width,cv.height);
@@ -566,7 +572,7 @@ function buildPDFWithJPEG(jpg,W,H){
  const bytes=new Uint8Array(length);let at=0;for(const part of chunks){bytes.set(part,at);at+=part.length}
  return new Blob([bytes],{type:'application/pdf'});
 }
-$('previewPrint').textContent='PDFを作成・共有／印刷';
+$('previewPrint').textContent='A4横・全面PDFを作成';
 $('previewPrint').onclick=async()=>{
  const button=$('previewPrint');button.disabled=true;button.textContent='PDFを作成中…';
  try{
@@ -580,6 +586,6 @@ $('previewPrint').onclick=async()=>{
   alert('PDFを保存しました。ファイルアプリで開き、共有から「プリント」を選んでください。');
   setTimeout(()=>URL.revokeObjectURL(url),60000);
  }catch(e){alert('PDFの作成に失敗しました：'+e.message)}
- finally{button.disabled=false;button.textContent='PDFを作成・共有／印刷'}
+ finally{button.disabled=false;button.textContent='A4横・全面PDFを作成'}
 };
 </script></body></html>
