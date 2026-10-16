@@ -244,9 +244,9 @@
 #report .reporttable td,#report .reporttable th{padding:2px 1px!important}
 #report .reportmeta{font-size:13px!important}
 #report .reportmeta b:first-child{font-size:18px!important}
-#report .report-footer th,#report .report-footer td{height:29px!important}
-#report .report-work td{height:49px!important}
-#report .report-crew tbody tr{height:24px!important}
+#report .report-footer th,#report .report-footer td{height:34px!important}
+#report .report-work td{height:55px!important}
+#report .report-crew tbody tr{height:29px!important}
 #report .report-bottom{margin-top:5px!important}
 #report .heavy-label,#report .report-main .reportnote .total-inline,#report .report-main .reportnote .total-inline b{font-size:11px!important}
 #report .nowrap-head{font-size:10px!important}
@@ -548,7 +548,7 @@ async function createReportPDFFallback(){
  const root=$('report'), width=1122, height=794;
  const canvas=document.createElement('canvas');canvas.width=2244;canvas.height=1588;
  const ctx=canvas.getContext('2d');ctx.scale(2,2);ctx.fillStyle='#fff';ctx.fillRect(0,0,width,height);
- const extra=document.createElement('style');extra.textContent='#report .report-main .data-row,#report .report-main .blank-row{height:31px!important}#report .report-main thead tr{height:24px!important}#report .report-footer th,#report .report-footer td{height:31px!important}#report .report-crew tbody tr{height:24px!important}';document.head.appendChild(extra);
+ const extra=document.createElement('style');extra.textContent='#report .report-main .data-row,#report .report-main .blank-row{height:31px!important}#report .report-main thead tr{height:24px!important}#report .report-footer th,#report .report-footer td{height:31px!important}#report .report-crew tbody tr{height:29px!important}';document.head.appendChild(extra);
  const oldStyle=root.getAttribute('style');
  root.style.setProperty('width',width+'px','important');
  root.style.setProperty('min-height','0','important');
@@ -616,12 +616,12 @@ async function createReportPDF(){
   const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
   const override=`#report{display:block!important;width:1122px!important;height:794px!important;padding:24px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
   #report .reporttable{font-size:12px!important;line-height:1.2!important}
-  #report .report-main .data-row,#report .report-main .blank-row{height:29px!important}
-  #report .report-main thead tr{height:28px!important}
+  #report .report-main .data-row,#report .report-main .blank-row{height:42px!important}
+  #report .report-main thead tr{height:34px!important}
   #report .reporttable td,#report .reporttable th{padding:1px!important}
-  #report .report-footer th,#report .report-footer td{height:29px!important}
-  #report .report-work td{height:49px!important}
-  #report .report-crew tbody tr{height:24px!important}
+  #report .report-footer th,#report .report-footer td{height:34px!important}
+  #report .report-work td{height:55px!important}
+  #report .report-crew tbody tr{height:29px!important}
   #report .report-bottom{margin-top:5px!important}
   #report .reportmeta{font-size:13px!important} #report .reportmeta b:first-child{font-size:18px!important} #report .reportmeta .report-date strong{font-size:18px!important;font-weight:700!important;letter-spacing:0!important} #report .reportmeta .report-weather{font-size:12px!important} #report .heavy-label,#report .report-main .reportnote .total-inline,#report .report-main .reportnote .total-inline b{font-size:11px!important} #report .nowrap-head{font-size:10px!important}`;
   const content=`<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><style>${css.replace(/<\/style/gi,'')}\n${override}</style></head><body style="margin:0;background:white">${clone.outerHTML}</body></html>`;
