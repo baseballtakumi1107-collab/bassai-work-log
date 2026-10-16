@@ -141,6 +141,32 @@
  #report .report-copyright{font-size:6px!important;margin-top:1px!important}
  #report table,#report tr,#report .report-bottom{break-inside:avoid!important;page-break-inside:avoid!important}
 }
+
+/* 直接印刷: 操作画面を含めず、A4横1枚にまとめる */
+@media print {
+ @page { size: A4 landscape; margin: 4mm; }
+ html,body { margin:0!important;padding:0!important;width:100%!important;height:auto!important;overflow:visible!important;background:white!important; }
+ body > header, body > main, body > .modal {display:none!important;}
+ body > #reportPreview {display:block!important;position:static!important;background:white!important;overflow:visible!important;height:auto!important;min-height:0!important;margin:0!important;padding:0!important;}
+ #reportPreview > .preview-tools {display:none!important;}
+ #reportPreview > .preview-scroll {display:block!important;position:static!important;overflow:visible!important;margin:0!important;padding:0!important;height:auto!important;}
+ #reportPreview #report {display:block!important;position:static!important;width:100%!important;max-width:100%!important;height:auto!important;min-height:0!important;box-shadow:none!important;margin:0!important;padding:0!important;}
+ #report .reportmeta {padding:0 1px 2px!important;font-size:8px!important;}
+ #report .reportmeta b:first-child {font-size:12px!important;}
+ #report .reporttable {font-size:7px!important;line-height:1.05!important;}
+ #report .report-main thead tr {height:16px!important;}
+ #report .report-main .data-row,#report .report-main .blank-row {height:15px!important;}
+ #report .reporttable td,#report .reporttable th {padding:1px!important;}
+ #report .summary-under {margin:0!important;}
+ #report .summary-box .total-inline {height:14px!important;padding:0 2px!important;}
+ #report .report-bottom {display:grid!important;grid-template-columns:22% 77%!important;gap:3px!important;margin-top:2px!important;break-inside:avoid!important;}
+ #report .report-work td {height:35px!important;}
+ #report .report-crew tbody tr {height:15px!important;}
+ #report .report-footer {margin-top:2px!important;}
+ #report .report-footer th,#report .report-footer td {height:18px!important;}
+ #report .report-copyright {margin-top:0!important;}
+ #report {break-inside:avoid!important;page-break-inside:avoid!important;}
+}
 </style></head><body><header>簡単日報｜集計表入力</header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
@@ -223,7 +249,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
   return '<tr class="data-row"><td>'+escVal(same?'〃':s.futaku)+'</td><td>'+escVal(same?'〃':s.pole)+'</td>'+vals+'<td>'+c.work+(c.unknown.length?'※':'')+'</td><td class="reportnote"><span class="heavy-label'+(s.heavy==='yes'?' circled':'')+'">重機</span></td></tr>';
  }).join('');
  const blank=Math.max(0,15-items.length);
- rows+=Array.from({length:blank},(_,i)=>'<tr class="blank-row">'+Array(11).fill('<td>&nbsp;</td>').join('')+'<td class="reportnote"><span class="heavy-label">重機</span></td>'+'</tr>').join('');
+ rows+=Array.from({length:blank},(_,i)=>'<tr class="blank-row">'+Array(11).fill('<td>&nbsp;</td>').join('')+'<td class="reportnote">'+(i>=blank-2?'':'<span class="heavy-label">重機</span>')+'</td></tr>').join('');
  const distinct=new Set(items.map(s=>s.group||s.futaku+'|'+s.pole)).size;
  // 完了径間・工事合計は備考欄の末尾2段へ。左側に空白の集計行を作らない。
  const summaryRows='<tr class="summary-row"><td colspan="11" class="extended-grid"></td><td class="reportnote"><div class="total-inline"><span>完了径間</span><b>'+distinct+'（径間）</b></div></td></tr><tr class="summary-row"><td colspan="11" class="extended-grid"></td><td class="reportnote"><div class="total-inline"><span>工事合計</span><b>'+total+'（工量）</b></div></td></tr>';
@@ -239,11 +265,11 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
  <table class="reporttable report-main"><colgroup><col style="width:10%"><col style="width:24%"><col span="8" style="width:5%"><col style="width:9%"><col style="width:17%"></colgroup>
  <thead><tr><th rowspan="2">付託 No.</th><th rowspan="2">電柱番号</th><th colspan="3">杉・桧</th><th colspan="3">雑木</th><th colspan="2">竹</th><th rowspan="2">工量計</th><th rowspan="2">備考</th></tr>
  <tr><th>根切<br>105</th><th>芯止<br>68</th><th>小枝<br>43</th><th>根切・芯止<br>40</th><th>大枝<br>78</th><th>小枝<br>34</th><th>一般<br>7</th><th>小雑・女竹<br>77</th></tr></thead><tbody>${rows}</tbody></table><div class="summary-under"><div class="summary-box"><div class="total-inline"><span>完了径間</span><b>${distinct}（径間）</b></div><div class="total-inline"><span>工事合計</span><b>${total}（工量）</b></div></div></div>
- <table class="reporttable report-footer"><tr><th style="width:9%">作業場所</th><td style="width:37%">自所</td><th style="width:9%">稼働時間</th><td style="width:15%">始 ${escVal(state.workStart||"08:00")} ／ 終 ${escVal(state.workEnd||"17:00")}</td><th style="width:7%">メモ</th><td></td></tr></table>
  <div class="report-bottom"><table class="reporttable report-work"><tr><th>作業内容</th></tr><tr><td style="height:62px">② 工事</td></tr></table>
  <table class="reporttable report-crew"><thead><tr><th>事業区分</th><th>班長名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>車両 No.</th><th>車両 No.</th><th>車両 No.</th></tr></thead><tbody>${crew}</tbody></table></div>
+ <table class="reporttable report-footer"><tr><th style="width:9%">作業場所</th><td style="width:37%">自所</td><th style="width:9%">稼働時間</th><td style="width:15%">始 ${escVal(state.workStart||"08:00")} ／ 終 ${escVal(state.workEnd||"17:00")}</td><th style="width:7%">メモ</th><td></td></tr></table>
  <div class="report-copyright">伐採交渉・工事　作業日報</div>`;
- document.activeElement?.blur();$('reportPreview').classList.add('show');$('reportPreview').setAttribute('aria-hidden','false');document.body.classList.add('previewing');window.scrollTo(0,0)
+ document.activeElement?.blur();window.print()
 };$('previewClose').onclick=()=>{$('reportPreview').classList.remove('show');$('reportPreview').setAttribute('aria-hidden','true');document.body.classList.remove('previewing')};$('previewPrint').onclick=()=>{
  const report=$('report').innerHTML;
  const style=document.querySelector('style').textContent;
