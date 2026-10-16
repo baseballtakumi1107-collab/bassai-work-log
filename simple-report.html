@@ -363,7 +363,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
    '<input type="checkbox" data-group-select="'+esc(key)+'" '+(checked?'checked':'')+' style="width:22px;height:22px;flex-shrink:0">'+
    '<b>'+esc(first.futaku)+'　'+esc(first.pole||'')+
    (count>1?' <span style="font-size:12px;font-weight:normal;color:#50665f">（'+count+'地権者分）</span>':'')+'</b></label>'+
-   '<button data-group-toggle="'+esc(key)+'" type="button">内訳</button></div>'+
+   '<button data-group-edit="'+esc(key)+'" type="button">編集</button><button data-group-delete="'+esc(key)+'" type="button">削除</button></div>'+
    '<div data-group-details="'+esc(key)+'" style="display:none;padding:8px 0 2px 30px">'+
    indices.map((i,j)=>'<div style="display:flex;align-items:center;gap:8px;margin:6px 0;flex-wrap:wrap">'+
     '<span style="flex:1">地権者'+(j+1)+'（'+calc(state.spans[i].cells).qty+'本）</span>'+
@@ -375,14 +375,23 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
   const indices=groups.get(b.dataset.groupSelect)||[];
   indices.forEach(i=>b.checked?selectedWorks.add(i):selectedWorks.delete(i));
  });
- document.querySelectorAll('[data-group-toggle]').forEach(b=>b.onclick=()=>{
-  const detail=[...document.querySelectorAll('[data-group-details]')].find(e=>e.dataset.groupDetails===b.dataset.groupToggle);
-  if(detail){const show=detail.style.display==='none';detail.style.display=show?'block':'none';b.textContent=show?'閉じる':'内訳';}
+ document.querySelectorAll('[data-group-edit]').forEach(b=>b.onclick=()=>{
+  const indices=groups.get(b.dataset.groupEdit)||[];
+  if(indices.length===1){document.querySelector('[data-edit="'+indices[0]+'"]')?.click();return;}
+  const detail=[...document.querySelectorAll('[data-group-details]')].find(e=>e.dataset.groupDetails===b.dataset.groupEdit);
+  if(detail){const show=detail.style.display==='none';detail.style.display=show?'block':'none';b.textContent=show?'閉じる':'編集';}
+ });
+ document.querySelectorAll('[data-group-delete]').forEach(b=>b.onclick=()=>{
+  const indices=groups.get(b.dataset.groupDelete)||[];
+  if(!confirm('この電柱間の'+indices.length+'地権者分をまとめて削除しますか？'))return;
+  const removed=new Set(indices);state.spans=state.spans.filter((_,i)=>!removed.has(i));
+  selectedWorks.clear();lastReportedIds=[];$('deleteReported').disabled=true;
+  saveState();renderSaved();
  });
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
   editIndex=Number(b.dataset.edit);let s=state.spans[editIndex];
   Object.assign(state,{futaku:s.base||s.futaku.split('-')[0],branch:s.branch||s.futaku.split('-')[1]||'1',pole:s.pole||((s.prefix||'')+(s.start||'')+(s.end?'〜'+s.end:'')),cells:{...s.cells},date:s.date,heavy:s.heavy||'no'});
-  sync();renderMatrix();window.scrollTo(0,0)
+  sync();renderMatrix();$('matrix').scrollIntoView({behavior:'smooth',block:'center'})
  });
  document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{
   if(confirm('この地権者分の保存作業を削除しますか？')){
