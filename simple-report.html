@@ -345,8 +345,7 @@ $('clear').onclick=()=>{if(confirm('表の入力をクリアしますか？')){s
  <table class="reporttable report-crew"><thead><tr><th>事業区分</th><th>班長名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>班員名</th><th>コード</th><th>車両 No.</th><th>車両 No.</th><th>車両 No.</th></tr></thead><tbody>${crew}</tbody></table></div>
  <div class="report-copyright">伐採交渉・工事　作業日報</div>`;
  document.activeElement?.blur();
-  $('reportPreview').classList.add('show');
-  $('reportPreview').setAttribute('aria-hidden','false');
+ window.print();
 };$('previewClose').onclick=()=>{$('reportPreview').classList.remove('show');$('reportPreview').setAttribute('aria-hidden','true');document.body.classList.remove('previewing')};$('previewPrint').onclick=()=>{window.print();return;
 
  const report=$('report').innerHTML;
