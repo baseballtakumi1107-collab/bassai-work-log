@@ -252,6 +252,10 @@
 #report .nowrap-head{font-size:10px!important}
 @media print{@page{size:A4 landscape;margin:0}}
 
+
+/* 日付のみ日報タイトルと同程度に拡大（天候は従来サイズ） */
+#report .reportmeta .report-date strong{font-size:18px!important;font-weight:700!important;letter-spacing:0!important;white-space:nowrap!important}
+#report .reportmeta .report-weather{font-size:12px!important;white-space:nowrap!important}
 </style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
@@ -381,7 +385,7 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
   return '<tr><td>'+(i===0?'伐採工事':'')+'</td><td>'+(i===0?escVal(state.leader):'')+'</td><td></td>'+person+Array.from({length:3},(_,j)=>'<td>'+escVal(cars[i*3+j])+'</td>').join('')+'</tr>';
  }).join('');
  $('report').innerHTML=`
- <div class="reportmeta"><b>作　業　日　報 （伐採交渉・<span class="circled-work">工事</span>）</b><span>${escVal(state.date)}　天候（　）</span><b>鹿屋 営業所</b></div>
+ <div class="reportmeta"><b>作　業　日　報 （伐採交渉・<span class="circled-work">工事</span>）</b><span class="report-date"><strong>${escVal(state.date)}</strong>　<span class="report-weather">天候（　）</span></span><b>鹿屋 営業所</b></div>
  <table class="reporttable report-main"><colgroup><col style="width:9%"><col style="width:20%"><col span="3" style="width:4.4%"><col style="width:7%"><col span="3" style="width:4.4%"><col style="width:7%"><col style="width:4.4%"><col style="width:9%"><col style="width:17%"></colgroup>
  <thead><tr><th rowspan="2">付託 No.</th><th rowspan="2">電柱番号</th><th colspan="3">杉・桧</th><th colspan="3">雑木</th><th colspan="2">竹</th><th rowspan="2">かずら<br>61</th><th rowspan="2">工量計</th><th rowspan="2">備考</th></tr>
  <tr><th>根切<br>105</th><th>芯止<br>68</th><th>小枝<br>43</th><th><span class="nowrap-head">根切・芯止</span><br>40</th><th>大枝<br>78</th><th>小枝<br>34</th><th>一般<br>7</th><th><span class="nowrap-head">小雑・女竹</span><br>77</th></tr></thead><tbody>${rows}</tbody></table>
@@ -543,7 +547,7 @@ async function createReportPDF(){
   #report .report-work td{height:49px!important}
   #report .report-crew tbody tr{height:24px!important}
   #report .report-bottom{margin-top:5px!important}
-  #report .reportmeta{font-size:13px!important} #report .reportmeta b:first-child{font-size:18px!important} #report .heavy-label,#report .report-main .reportnote .total-inline,#report .report-main .reportnote .total-inline b{font-size:11px!important} #report .nowrap-head{font-size:10px!important}`;
+  #report .reportmeta{font-size:13px!important} #report .reportmeta b:first-child{font-size:18px!important} #report .reportmeta .report-date strong{font-size:18px!important;font-weight:700!important;letter-spacing:0!important} #report .reportmeta .report-weather{font-size:12px!important} #report .heavy-label,#report .report-main .reportnote .total-inline,#report .report-main .reportnote .total-inline b{font-size:11px!important} #report .nowrap-head{font-size:10px!important}`;
   const content=`<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><style>${css.replace(/<\/style/gi,'')}\n${override}</style></head><body style="margin:0;background:white">${clone.outerHTML}</body></html>`;
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'"><foreignObject width="100%" height="100%">'+content+'</foreignObject></svg>';
   const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
@@ -578,9 +582,9 @@ function buildPDFWithJPEG(jpg,W,H){
  const bytes=new Uint8Array(length);let at=0;for(const part of chunks){bytes.set(part,at);at+=part.length}
  return new Blob([bytes],{type:'application/pdf'});
 }
-$('previewPrint').textContent='A4横・比率を保ってPDF作成';
+$('previewPrint').textContent='印刷';
 $('previewPrint').onclick=async()=>{
- const button=$('previewPrint');button.disabled=true;button.textContent='PDFを作成中…';
+ const button=$('previewPrint');button.disabled=true;button.textContent='印刷の準備中…';
  try{
   let blob;try{blob=await createReportPDF()}catch(originalError){console.warn('Safari画像化失敗、代替方式で作成',originalError);blob=await createReportPDFFallback()}const filename='作業日報_'+(state.date||'').replace(/[^0-9-]/g,'')+'.pdf';
   const file=new File([blob],filename,{type:'application/pdf'});
@@ -592,6 +596,6 @@ $('previewPrint').onclick=async()=>{
   alert('PDFを保存しました。ファイルアプリで開き、共有から「プリント」を選んでください。');
   setTimeout(()=>URL.revokeObjectURL(url),60000);
  }catch(e){alert('PDFの作成に失敗しました：'+e.message)}
- finally{button.disabled=false;button.textContent='A4横・比率を保ってPDF作成'}
+ finally{button.disabled=false;button.textContent='印刷'}
 };
 </script></body></html>
