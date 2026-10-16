@@ -375,7 +375,9 @@ function esc(x){return String(x).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;',
  lastReportedIds=indexes.slice();
  $('deleteReported').disabled=false;
  document.activeElement?.blur();
- window.print();
+ $('reportPreview').classList.add('show');
+ $('reportPreview').setAttribute('aria-hidden','false');
+ document.body.classList.add('previewing');
 };$('deleteReported').onclick=()=>{
  if(!lastReportedIds.length)return;
  if(!confirm('直前に日報へ載せた '+lastReportedIds.length+' 件の作業を削除しますか？\n印刷またはPDF保存が完了したことを確認してから削除してください。'))return;
