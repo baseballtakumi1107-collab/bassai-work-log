@@ -235,7 +235,22 @@
  #report .report-main .data-row,#report .report-main .blank-row {height:19px!important}
 }
 #report .nowrap-head{white-space:nowrap;display:inline-block;font-size:8px;letter-spacing:-.35px} @media print{#report .nowrap-head{font-size:8px!important}}
-</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">PDF対応版 10/16</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
+
+/* v10: 日報確認画面とPDFの共通レイアウト（A4横比率） */
+.report-preview.show #report{width:1122px!important;min-height:0!important;height:794px!important;padding:18px!important;overflow:hidden!important;box-sizing:border-box!important}
+#report .reporttable{font-size:10px;line-height:1.12}
+#report .report-main .data-row,#report .report-main .blank-row{height:19px}
+#report .report-main thead tr{height:19px}
+#report .reporttable td,#report .reporttable th{padding:1px}
+#report .report-footer th,#report .report-footer td{height:25px}
+#report .report-work td{height:45px}
+#report .report-crew tbody tr{height:20px}
+#report .report-bottom{margin-top:3px}
+@media print{
+ @page{size:A4 landscape;margin:0}
+ #reportPreview #report{width:297mm!important;height:210mm!important;max-height:210mm!important;padding:4.8mm!important;overflow:hidden!important;box-sizing:border-box!important}
+}
+</style></head><body><header>簡単日報｜集計表入力 <small style="font-size:11px;opacity:.8">日報プレビュー統一版 10/17</small></header><main><section class="card"><h3>① 基本情報</h3><label style="max-width:320px">作業日<input type="date" id="date" style="width:100%"></label>
 <div class="worktime-controls"><span class="worktime-title">稼働時間</span><div class="worktime-inline"><select id="workStart" aria-label="開始時間"></select><span>〜</span><select id="workEnd" aria-label="終了時間"></select></div></div>
 <div class="multi-block"><h4>車両ナンバー <span class="muted">（4〜6台でも登録可能）</span></h4><div id="vehicleRows"></div><button type="button" id="addVehicle">＋ 車両を追加</button></div>
 <div class="multi-block"><label>班長名<input id="leader" placeholder="班長名を入力" autocomplete="off"></label><h4>班員 <span class="muted">（6人以上も登録可能）</span></h4><div id="crewRows"></div><button type="button" id="addCrew">＋ 班員を追加</button></div>
@@ -447,25 +462,37 @@ $('import').addEventListener('change',()=>{setTimeout(()=>{initMulti()},150)},fa
 
 // iPhoneホーム画面用：印刷APIに依存しないオフラインPDF出力
 async function createReportPDF(){
- // Render the actual report HTML instead of rebuilding its table with a separate grid engine.
- const report=$('report');
- const width=1100,height=780;
- const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
- const clone=report.cloneNode(true);
- clone.removeAttribute('id');clone.setAttribute('style','display:block!important;position:static!important;width:1100px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:10px!important;background:white!important;color:black!important;box-shadow:none!important;box-sizing:border-box!important;font-family:serif!important');
- const content=`<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><style>${css.replace(/<\/style/gi,'')}\n*{-webkit-print-color-adjust:exact;print-color-adjust:exact}body{margin:0;background:white}#report{display:block!important}</style></head><body>${clone.outerHTML}</body></html>`;
- const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'"><foreignObject width="100%" height="100%">'+content+'</foreignObject></svg>';
- const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
- try{
-  const img=new Image();img.src=url;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject;setTimeout(()=>reject(new Error('画像化できませんでした')),6000)});
-  const cv=document.createElement('canvas');cv.width=2200;cv.height=1560;
-  const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width,cv.height);
-  const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.95));
-  if(!blob||blob.size<3000)throw new Error('日報の画像化に失敗しました');
-  const data=new Uint8Array(await blob.arrayBuffer());
-  return buildPDFWithJPEG(data,cv.width,cv.height);
- }finally{URL.revokeObjectURL(url)}
+  // 日報確認画面と同じ幅・高さ・文字サイズで画像化する。
+  const width=1122,height=794;
+  const report=$('report');
+  const clone=report.cloneNode(true);
+  // IDを残さないと #report に対する表のスタイルがPDFから消えてしまう。
+  clone.setAttribute('style','display:block!important;position:static!important;width:1122px!important;height:794px!important;min-height:0!important;max-height:none!important;margin:0!important;padding:18px!important;background:#fff!important;color:#111!important;box-shadow:none!important;overflow:hidden!important;box-sizing:border-box!important');
+  const css=[...document.styleSheets].map(sheet=>{try{return [...sheet.cssRules].map(r=>r.cssText).join('\n')}catch(e){return ''}}).join('\n');
+  const override=`#report{display:block!important;width:1122px!important;height:794px!important;padding:18px!important;box-sizing:border-box!important;overflow:hidden!important;background:white!important;color:#111!important}
+  #report .reporttable{font-size:10px!important;line-height:1.12!important}
+  #report .report-main .data-row,#report .report-main .blank-row{height:19px!important}
+  #report .report-main thead tr{height:19px!important}
+  #report .reporttable td,#report .reporttable th{padding:1px!important}
+  #report .report-footer th,#report .report-footer td{height:25px!important}
+  #report .report-work td{height:45px!important}
+  #report .report-crew tbody tr{height:20px!important}
+  #report .report-bottom{margin-top:3px!important}`;
+  const content=`<html xmlns="http://www.w3.org/1999/xhtml"><head><meta charset="utf-8"/><style>${css.replace(/<\/style/gi,'')}\n${override}</style></head><body style="margin:0;background:white">${clone.outerHTML}</body></html>`;
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'"><foreignObject width="100%" height="100%">'+content+'</foreignObject></svg>';
+  const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml;charset=utf-8'}));
+  try{
+    const img=new Image();
+    const loaded=new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('日報の画像化に失敗しました'));setTimeout(()=>reject(new Error('画像化がタイムアウトしました')),8000)});
+    img.src=url;await loaded;
+    const cv=document.createElement('canvas');cv.width=2244;cv.height=1588;
+    const ctx=cv.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width,cv.height);
+    const blob=await new Promise(resolve=>cv.toBlob(resolve,'image/jpeg',.96));
+    if(!blob||blob.size<3000)throw new Error('PDF画像を作成できませんでした');
+    return buildPDFWithJPEG(new Uint8Array(await blob.arrayBuffer()),cv.width,cv.height);
+  }finally{URL.revokeObjectURL(url)}
 }
+
 function buildPDFWithJPEG(jpg,W,H){
  const encoder=new TextEncoder(),chunks=[],offsets=[0];let length=0;
  const add=b=>{chunks.push(b);length+=b.length};const str=t=>add(encoder.encode(t));
